@@ -24,10 +24,13 @@
    szükségtelenül, nincs animáció, nincs felugró ablak, nincs hang. A watchdog alacsony
    prioritású szálon, ritka (pl. 2–5 s) ciklussal fut. Mérjük és dokumentáljuk a saját
    terhelését.
-4. **Nincs bedrótozott DJ-szoftver.** A DJ-alkalmazásokat külön leíró fájlok (scriptek) írják
-   le, a közösség bővítheti őket.
-5. **Átlátható.** Minden lépés naplózva, a felhasználó előre látja, mit fog módosítani a program.
-6. **Védett elemek.** Az audio alapszolgáltatások (`Audiosrv`, `AudioEndpointBuilder`), a
+4. **Minden tweak natív Pascal kód.** Nincs PowerShell vagy más külső script a tweakekben:
+   így a tiltólista minden műveletre kikényszeríthető, és nincs rendszergazdai jogú
+   kódfuttatás felhasználó által írható fájlokból. Új tweak = új programverzió.
+5. **Nincs bedrótozott DJ-szoftver.** A DJ-alkalmazásokat külön leíró fájlok írják le
+   (csak adat, végrehajtható művelet nélkül), a közösség bővítheti őket.
+6. **Átlátható.** Minden lépés naplózva, a felhasználó előre látja, mit fog módosítani a program.
+7. **Védett elemek.** Az audio alapszolgáltatások (`Audiosrv`, `AudioEndpointBuilder`), a
    kiválasztott DJ-szoftver, a hangkártya/kontroller driverei és azok szolgáltatásai sosem
    kerülnek leállításra.
 
@@ -123,7 +126,7 @@ Tartalom (tervezet):
 }
 ```
 - Kezdő készlet: rekordbox, Serato DJ, Traktor, VirtualDJ, Mixxx, djay Pro
-- Később mérlegelendő: valódi scriptnyelv (pl. Pascal Script) – csak ha a deklaratív forma kevés.
+- A leírók csak adatot tartalmaznak; végrehajtható scriptnyelvet szándékosan nem támogatunk (lásd 1.4).
 
 ---
 
@@ -154,6 +157,8 @@ Tartalom (tervezet):
 ## 7. Felhasználói felület
 
 - Főablak: nagy **ZEN BE / KI** gomb, profilválasztó, állapotjelző (zöld/sárga/piros)
+- Zen opciók checkboxokkal, **impact szerint csoportosítva** (High / Medium / Low impact);
+  a kockázati szint és a leírás tooltipben
 - Audit nézet: tételenkénti állapot, kockázati szint, magyarázat
 - Előnézet: mi fog változni bekapcsolás előtt
 - Profilszerkesztő, DJ-szoftver kezelő

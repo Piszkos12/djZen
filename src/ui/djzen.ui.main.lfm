@@ -1,30 +1,80 @@
 object MainForm: TMainForm
   Left = 400
-  Height = 320
-  Top = 200
-  Width = 420
+  Height = 640
+  Top = 120
+  Width = 480
   Caption = 'djZen'
+  Constraints.MinHeight = 400
+  Constraints.MinWidth = 360
   Position = poScreenCenter
+  ShowHint = True
   OnCreate = FormCreate
-  object ZenButton: TButton
-    Left = 60
-    Height = 120
-    Top = 60
-    Width = 300
-    Anchors = []
-    Caption = 'ZEN'
-    Font.Height = -40
-    Font.Style = [fsBold]
-    ParentFont = False
+  OnDestroy = FormDestroy
+  object TopPanel: TPanel
+    Left = 0
+    Height = 150
+    Top = 0
+    Width = 480
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 150
+    ClientWidth = 480
     TabOrder = 0
+    object ZenButton: TButton
+      AnchorSideLeft.Control = TopPanel
+      AnchorSideTop.Control = TopPanel
+      AnchorSideRight.Control = TopPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 16
+      Height = 90
+      Top = 16
+      Width = 448
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 16
+      BorderSpacing.Top = 16
+      BorderSpacing.Right = 16
+      Caption = 'ZEN'
+      Font.Height = -36
+      Font.Style = [fsBold]
+      OnClick = ZenButtonClick
+      ParentFont = False
+      TabOrder = 0
+    end
+    object StatusLabel: TLabel
+      AnchorSideLeft.Control = TopPanel
+      AnchorSideTop.Control = ZenButton
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = TopPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 16
+      Height = 20
+      Top = 116
+      Width = 448
+      Alignment = taCenter
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = False
+      BorderSpacing.Left = 16
+      BorderSpacing.Top = 10
+      BorderSpacing.Right = 16
+      Caption = 'Ready'
+    end
   end
-  object StatusLabel: TLabel
-    Left = 60
-    Height = 20
-    Top = 210
-    Width = 300
-    Alignment = taCenter
-    AutoSize = False
-    Caption = 'Ready'
+  object OptionsBox: TScrollBox
+    Left = 0
+    Height = 490
+    Top = 150
+    Width = 480
+    HorzScrollBar.Visible = False
+    VertScrollBar.Increment = 20
+    VertScrollBar.Tracking = True
+    Align = alClient
+    BorderStyle = bsNone
+    ChildSizing.LeftRightSpacing = 16
+    ChildSizing.TopBottomSpacing = 8
+    ChildSizing.VerticalSpacing = 12
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    TabOrder = 1
   end
 end
