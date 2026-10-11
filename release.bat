@@ -1,9 +1,9 @@
 @echo off
 rem djZen release script - builds dev + prod, runs the unit tests and packs
 rem bin\prod into dist\djZen-win64.zip, ready to attach to a GitHub Release.
-rem The zip name has no version on purpose: the stable download link
-rem https://github.com/Piszkos12/djZen/releases/latest/download/djZen-win64.zip
-rem always points to the newest release.
+rem The download links in README.md and docs\index.html point to the
+rem versioned asset (releases/download/vX.Y.Z/djZen-win64.zip): update the
+rem version there for every release.
 
 setlocal
 cd /d "%~dp0"

@@ -7,7 +7,7 @@ One-click "DJ Zen mode" for Windows laptops. Silences notifications, disables Wi
 
 ## Download
 
-**[Download the latest release](https://github.com/Piszkos12/djZen/releases/latest/download/djZen-win64.zip)**
+**[Download djZen 0.1.0](https://github.com/Piszkos12/djZen/releases/download/v0.1.0/djZen-win64.zip)**
 · [all releases](https://github.com/Piszkos12/djZen/releases)
 · [website](https://piszkos12.github.io/djZen/)
 

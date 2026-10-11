@@ -254,8 +254,10 @@ end;
    descriptors and selector, runtime protection, DJ software priority tweak
 6. **M5 – Watchdog, tray icon**
 7. **M6 – Advanced/expert tweaks, latency measurement, localization, installer**
-8. **Release** 🔄 manual: `release.bat` → GitHub Release asset `djZen-win64.zip` (stable link
-   `releases/latest/download/djZen-win64.zip`), website on GitHub Pages from `docs/`.
+8. **Release** 🔄 **v0.1.0 published.** Manual flow: `release.bat` → GitHub Release asset
+   `djZen-win64.zip`; README and `docs/index.html` link the versioned asset
+   (`releases/download/v0.1.0/djZen-win64.zip`) – bump the version there for every release.
+   Website on GitHub Pages from `docs/`.
    Later: GitHub Actions build on version tags + code signing (e.g. SignPath, RSA key).
 
 ---
