@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, StdCtrls, ExtCtrls, Graphics,
-  djzen.core.tweak, djzen.core.engine;
+  djzen.core.tweak, djzen.core.engine, djzen.profiles;
 
 type
   { One option row: checkbox + audit status. }
@@ -19,6 +19,8 @@ type
   TMainForm = class(TForm)
     TopPanel: TPanel;
     ZenButton: TButton;
+    ProfileLabel: TLabel;
+    ProfileCombo: TComboBox;
     RecheckButton: TButton;
     StatusLabel: TLabel;
     DisclaimerLabel: TLabel;
@@ -27,10 +29,18 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure ZenButtonClick(Sender: TObject);
     procedure RecheckButtonClick(Sender: TObject);
+    procedure ProfileComboChange(Sender: TObject);
   private
     FEngine: TZenEngine;
     FRows: TList;   // TOptionRow
+    FProfiles: TProfileList;
+    FModified: Boolean;       // checkboxes differ from the selected profile
+    FLoadingProfile: Boolean;
     procedure BuildOptions;
+    procedure LoadProfiles;
+    procedure SelectProfile(Index: Integer);
+    function CurrentProfileName: string;
+    procedure OptionClick(Sender: TObject);
     procedure RunChecks;
     procedure UpdateState;
     procedure ShowResult(const What: string; const R: TZenResult);
@@ -56,7 +66,9 @@ begin
   LogInit(LogFile);
   FEngine := TZenEngine.Create(Tweaks, SnapshotFile);
   FRows := TList.Create;
+  FProfiles := TProfileList.Create(True);
   BuildOptions;
+  LoadProfiles;
   RunChecks;
   UpdateState;
 end;
@@ -68,6 +80,7 @@ begin
   for I := 0 to FRows.Count - 1 do
     TOptionRow(FRows[I]).Free;
   FRows.Free;
+  FProfiles.Free;
   FEngine.Free;
 end;
 
@@ -122,7 +135,7 @@ begin
       Row.CheckBox := TCheckBox.Create(Self);
       Row.CheckBox.Align := alClient;
       Row.CheckBox.Caption := Tweak.Name;
-      Row.CheckBox.Checked := Tweak.Risk = trSafe;
+      Row.CheckBox.OnClick := @OptionClick;
       Row.CheckBox.Parent := Panel;
 
       FRows.Add(Row);
@@ -135,6 +148,71 @@ begin
       Caption := 'No Zen options available yet.';
       Parent := OptionsBox;
     end;
+end;
+
+procedure TMainForm.LoadProfiles;
+var
+  I: Integer;
+begin
+  FProfiles.LoadDir(FindBuiltinProfilesDir, True);
+  FProfiles.SortByOrder;
+  ProfileCombo.Items.BeginUpdate;
+  try
+    ProfileCombo.Items.Clear;
+    for I := 0 to FProfiles.Count - 1 do
+      ProfileCombo.Items.Add(FProfiles[I].Name);
+  finally
+    ProfileCombo.Items.EndUpdate;
+  end;
+  if FProfiles.Count > 0 then
+  begin
+    ProfileCombo.ItemIndex := 0;
+    SelectProfile(0);
+  end;
+end;
+
+procedure TMainForm.SelectProfile(Index: Integer);
+var
+  P: TProfile;
+  Row: TOptionRow;
+  I: Integer;
+begin
+  if (Index < 0) or (Index >= FProfiles.Count) then
+    Exit;
+  P := FProfiles[Index];
+  ProfileCombo.Hint := P.Description;
+  FLoadingProfile := True;
+  try
+    for I := 0 to FRows.Count - 1 do
+    begin
+      Row := TOptionRow(FRows[I]);
+      Row.CheckBox.Checked := Row.Tweak.CanApply and P.IsEnabled(Row.Tweak.Id);
+    end;
+  finally
+    FLoadingProfile := False;
+  end;
+  FModified := False;
+end;
+
+function TMainForm.CurrentProfileName: string;
+begin
+  if ProfileCombo.ItemIndex < 0 then
+    Result := 'Custom'
+  else
+    Result := ProfileCombo.Items[ProfileCombo.ItemIndex];
+  if FModified then
+    Result := Result + ' (modified)';
+end;
+
+procedure TMainForm.ProfileComboChange(Sender: TObject);
+begin
+  SelectProfile(ProfileCombo.ItemIndex);
+end;
+
+procedure TMainForm.OptionClick(Sender: TObject);
+begin
+  if not FLoadingProfile then
+    FModified := True;
 end;
 
 procedure TMainForm.RunChecks;
@@ -175,8 +253,9 @@ begin
   ZenOn := FEngine.IsActive;
   if ZenOn then
   begin
-    ZenButton.Caption := 'ZEN ON';
-    StatusLabel.Caption := 'Zen mode active - profile: ' + FEngine.ActiveProfile;
+    ZenButton.Caption := 'ZEN ON - click to restore';
+    StatusLabel.Caption := Format('Active since %s - %s',
+      [StringReplace(FEngine.ActiveSince, 'T', ' ', []), FEngine.ActiveProfile]);
   end
   else
   begin
@@ -188,6 +267,7 @@ begin
     Row := TOptionRow(FRows[I]);
     Row.CheckBox.Enabled := not ZenOn and Row.Tweak.CanApply;
   end;
+  ProfileCombo.Enabled := not ZenOn;
 end;
 
 procedure TMainForm.ShowResult(const What: string; const R: TZenResult);
@@ -229,7 +309,7 @@ begin
             Row := TOptionRow(FRows[I]);
             Settings.Add(Row.Tweak.Id, Row.CheckBox.Checked);
           end;
-          R := FEngine.Activate('Custom', Settings);
+          R := FEngine.Activate(CurrentProfileName, Settings);
         finally
           Settings.Free;
         end;

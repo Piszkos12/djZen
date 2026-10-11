@@ -12,12 +12,12 @@ object MainForm: TMainForm
   OnDestroy = FormDestroy
   object TopPanel: TPanel
     Left = 0
-    Height = 160
+    Height = 200
     Top = 0
     Width = 520
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 160
+    ClientHeight = 200
     ClientWidth = 520
     TabOrder = 0
     object ZenButton: TButton
@@ -40,8 +40,39 @@ object MainForm: TMainForm
       ParentFont = False
       TabOrder = 0
     end
-    object RecheckButton: TButton
+    object ProfileLabel: TLabel
+      AnchorSideLeft.Control = TopPanel
+      AnchorSideTop.Control = ProfileCombo
+      AnchorSideTop.Side = asrCenter
+      Left = 16
+      Height = 20
+      Top = 121
+      Width = 50
+      BorderSpacing.Left = 16
+      Caption = 'Profile:'
+    end
+    object ProfileCombo: TComboBox
+      AnchorSideLeft.Control = ProfileLabel
+      AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = ZenButton
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = TopPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 76
+      Height = 28
+      Top = 116
+      Width = 428
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 10
+      BorderSpacing.Right = 16
+      ItemHeight = 20
+      OnChange = ProfileComboChange
+      Style = csDropDownList
+      TabOrder = 2
+    end
+    object RecheckButton: TButton
+      AnchorSideTop.Control = ProfileCombo
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = TopPanel
       AnchorSideRight.Side = asrBottom

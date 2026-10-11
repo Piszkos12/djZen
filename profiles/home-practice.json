@@ -1,0 +1,14 @@
+{
+  "name": "Home practice",
+  "order": 3,
+  "description": "Light mode for practice: silences notifications and system sounds and keeps the laptop awake, but leaves network and services alone.",
+  "tweaks": {
+    "notify.toasts": true,
+    "notify.system-sounds": true,
+    "notify.audio-ducking": true,
+    "power.usb-selective-suspend": true,
+    "power.sleep": true,
+    "power.display-off": true,
+    "power.hibernate": true
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Streaming zen",
+  "order": 2,
+  "description": "For streaming or online music services: the network stays on, everything else that can disturb the audio is switched off.",
+  "tweaks": {
+    "notify.toasts": true,
+    "notify.system-sounds": true,
+    "notify.audio-ducking": true,
+    "power.usb-selective-suspend": true,
+    "power.sleep": true,
+    "power.pcie-aspm": true,
+    "power.cpu-min-state": true,
+    "power.display-off": true,
+    "power.hibernate": true,
+    "radio.wifi": false,
+    "radio.bluetooth": true,
+    "service.windows-update": true,
+    "service.windows-search": true,
+    "service.sysmain": true
+  }
+}

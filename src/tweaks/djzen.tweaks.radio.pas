@@ -12,7 +12,7 @@ uses
   SysUtils, fpjson, djzen.core.tweak, djzen.win.radio;
 
 type
-  TWifiTweak = class(TAuditOnlyTweak)
+  TWifiTweak = class(TTweak)
   public
     function Id: string; override;
     function Name: string; override;
@@ -22,9 +22,11 @@ type
     function Risk: TTweakRisk; override;
     function Check: TTweakCheck; override;
     function Capture: TJSONObject; override;
+    procedure Apply(Params: TJSONObject); override;
+    procedure Revert(Saved: TJSONObject); override;
   end;
 
-  TBluetoothTweak = class(TAuditOnlyTweak)
+  TBluetoothTweak = class(TTweak)
   public
     function Id: string; override;
     function Name: string; override;
@@ -34,6 +36,8 @@ type
     function Risk: TTweakRisk; override;
     function Check: TTweakCheck; override;
     function Capture: TJSONObject; override;
+    procedure Apply(Params: TJSONObject); override;
+    procedure Revert(Saved: TJSONObject); override;
   end;
 
 const
@@ -96,8 +100,48 @@ begin
   Result.Add('serviceAvailable', Available);
   List := TJSONArray.Create;
   for A in Adapters do
-    List.Add(TJSONObject.Create(['description', A.Description, 'state', RadioStateText[A.State]]));
+    List.Add(TJSONObject.Create(['guid', GUIDToString(A.Guid), 'description', A.Description,
+      'state', RadioStateText[A.State]]));
   Result.Add('adapters', List);
+end;
+
+procedure TWifiTweak.Apply(Params: TJSONObject);
+var
+  Adapters: TWifiAdapters;
+  Available: Boolean;
+  A: TWifiAdapter;
+begin
+  Adapters := QueryWifiAdapters(Available);
+  for A in Adapters do
+    if A.State in [rsOn, rsUnknown] then
+      SetWifiRadio(A.Guid, False);
+end;
+
+{ Only adapters that were on are switched back on; adapters removed since
+  the capture are skipped. }
+procedure TWifiTweak.Revert(Saved: TJSONObject);
+var
+  Adapters: TWifiAdapters;
+  Available: Boolean;
+  List: TJSONArray;
+  Item: TJSONObject;
+  Guid: TGUID;
+  I, J: Integer;
+begin
+  List := Saved.Find('adapters', jtArray) as TJSONArray;
+  if List = nil then
+    Exit;
+  Adapters := QueryWifiAdapters(Available);
+  for I := 0 to List.Count - 1 do
+  begin
+    Item := List.Objects[I];
+    if Item.Get('state', '') <> RadioStateText[rsOn] then
+      Continue;
+    Guid := StringToGUID(Item.Strings['guid']);
+    for J := 0 to High(Adapters) do
+      if IsEqualGUID(Adapters[J].Guid, Guid) then
+        SetWifiRadio(Guid, True);
+  end;
 end;
 
 { TBluetoothTweak }
@@ -112,15 +156,46 @@ function TBluetoothTweak.Category: TTweakCategory; begin Result := tcNetwork; en
 function TBluetoothTweak.Impact: TTweakImpact; begin Result := tiMedium; end;
 function TBluetoothTweak.Risk: TTweakRisk; begin Result := trSafe; end;
 
+{ Radios of the Bluetooth kind as Windows radio management sees them. }
+function BluetoothRadios: TWinRadios;
+var
+  All: TWinRadios;
+  R: TWinRadio;
+begin
+  Result := nil;
+  All := QueryWinRadios;
+  for R in All do
+    if R.Kind = rkBluetooth then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := R;
+    end;
+end;
+
 function TBluetoothTweak.Check: TTweakCheck;
+var
+  Radios: TWinRadios;
+  R: TWinRadio;
+  Detail: string;
+  AnyOn: Boolean;
 begin
   try
-    case QueryBluetoothRadio of
-      rsOn:      Result := MakeCheck(tsNotOptimal, 'Bluetooth radio is on');
-      rsUnknown: Result := MakeCheck(tsUnknown, 'Bluetooth state cannot be read');
-    else
-      Result := MakeCheck(tsOptimal, 'No active Bluetooth radio');
+    Radios := BluetoothRadios;
+    if Length(Radios) = 0 then
+      Exit(MakeCheck(tsNotApplicable, 'No Bluetooth radio'));
+    Detail := '';
+    AnyOn := False;
+    for R in Radios do
+    begin
+      if Detail <> '' then
+        Detail := Detail + '; ';
+      Detail := Detail + R.Name + ': ' + RadioStateText[R.State];
+      AnyOn := AnyOn or (R.State in [rsOn, rsUnknown]);
     end;
+    if AnyOn then
+      Result := MakeCheck(tsNotOptimal, Detail)
+    else
+      Result := MakeCheck(tsOptimal, Detail);
   except
     on E: Exception do
       Result := MakeCheck(tsError, E.Message);
@@ -128,8 +203,33 @@ begin
 end;
 
 function TBluetoothTweak.Capture: TJSONObject;
+var
+  R: TWinRadio;
+  List: TJSONArray;
 begin
-  Result := TJSONObject.Create(['state', RadioStateText[QueryBluetoothRadio]]);
+  List := TJSONArray.Create;
+  Result := TJSONObject.Create(['radios', List]);
+  for R in BluetoothRadios do
+    List.Add(TJSONObject.Create(['name', R.Name, 'state', RadioStateText[R.State]]));
+end;
+
+procedure TBluetoothTweak.Apply(Params: TJSONObject);
+begin
+  SetWinRadioState(rkBluetooth, '', False);
+end;
+
+{ Only radios that were on are switched back on. }
+procedure TBluetoothTweak.Revert(Saved: TJSONObject);
+var
+  List: TJSONArray;
+  I: Integer;
+begin
+  List := Saved.Find('radios', jtArray) as TJSONArray;
+  if List = nil then
+    Exit;
+  for I := 0 to List.Count - 1 do
+    if List.Objects[I].Get('state', '') = RadioStateText[rsOn] then
+      SetWinRadioState(rkBluetooth, List.Objects[I].Get('name', ''), True);
 end;
 
 initialization

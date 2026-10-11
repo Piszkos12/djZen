@@ -21,12 +21,29 @@ lazbuild djZen.lpi
 
 The executable is written to `bin\djZen.exe` and requires administrator rights.
 
+## Emergency restore
+
+If djZen cannot be opened normally, restore every changed setting from the command line:
+
+```
+djZen.exe /restore          restore and show the result
+djZen.exe /restore /quiet   restore silently (exit code 0 = OK, 1 = failures)
+```
+
+## Testing
+
+```
+test.bat                                   unit tests (change nothing on the system)
+set "DJZEN_LIVE_TESTS=1" && test.bat       + live round-trip test: really applies and reverts
+                                             every tweak (elevated prompt required)
+```
+
 ## Disclaimer
 
 djZen changes system settings (power plans, services, devices, radios). **Use it at your own risk.**
 It is provided "as is", without warranty of any kind, and the authors accept no liability for any
 damage, data loss, failed performance or other consequence of using it. You alone decide whether to
-use it — test it at home before relying on it at a gig. See sections 15 and 16 of the [license](LICENSE).
+use it — test it at home before relying on it live. See sections 15 and 16 of the [license](LICENSE).
 
 ## License
 

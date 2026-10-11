@@ -8,7 +8,7 @@ unit djzen.core.snapshot;
 
   Format:
     { "version": 1, "app": "0.1.0", "created": "2026-10-11T12:00:00",
-      "profile": "Offline gig",
+      "profile": "Offline zen",
       "entries": [ { "id": "...", "state": "captured|applied", "data": {...} } ] } *)
 
 {$mode objfpc}{$H+}
@@ -28,6 +28,7 @@ type
     function Entries: TJSONArray;
     function Entry(Index: Integer): TJSONObject;
     function GetProfile: string;
+    function GetCreated: string;
   public
     constructor Create(const AFileName: string);
     destructor Destroy; override;
@@ -49,6 +50,7 @@ type
 
     property FileName: string read FFileName;
     property Profile: string read GetProfile;
+    property Created: string read GetCreated;
   end;
 
 const
@@ -165,6 +167,14 @@ begin
     Result := ''
   else
     Result := FRoot.Get('profile', '');
+end;
+
+function TSnapshot.GetCreated: string;
+begin
+  if FRoot = nil then
+    Result := ''
+  else
+    Result := FRoot.Get('created', '');
 end;
 
 procedure TSnapshot.AddEntry(const Id: string; Data: TJSONObject);

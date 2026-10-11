@@ -35,6 +35,8 @@ type
     constructor Create(ARegistry: TTweakRegistry; const ASnapshotFile: string);
     function IsActive: Boolean;
     function ActiveProfile: string;
+    { ISO timestamp of the activation, '' if not active. }
+    function ActiveSince: string;
     { Settings: { "<tweak id>": { params } | true, ... }. Raises if already active. }
     function Activate(const ProfileName: string; Settings: TJSONObject): TZenResult;
     function Deactivate: TZenResult;
@@ -76,6 +78,22 @@ begin
   try
     Snap.Load;
     Result := Snap.Profile;
+  finally
+    Snap.Free;
+  end;
+end;
+
+function TZenEngine.ActiveSince: string;
+var
+  Snap: TSnapshot;
+begin
+  Result := '';
+  if not IsActive then
+    Exit;
+  Snap := TSnapshot.Create(FSnapshotFile);
+  try
+    Snap.Load;
+    Result := Snap.Created;
   finally
     Snap.Free;
   end;

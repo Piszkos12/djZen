@@ -13,7 +13,7 @@ uses
 
 type
   { One power setting that must equal OptimalValue on both AC and DC. }
-  TPowerSettingTweak = class(TAuditOnlyTweak)
+  TPowerSettingTweak = class(TTweak)
   private
     FId, FName, FDescription: string;
     FImpact: TTweakImpact;
@@ -34,6 +34,8 @@ type
     function Risk: TTweakRisk; override;
     function Check: TTweakCheck; override;
     function Capture: TJSONObject; override;
+    procedure Apply(Params: TJSONObject); override;
+    procedure Revert(Saved: TJSONObject); override;
   end;
 
 constructor TPowerSettingTweak.Create(const AId, AName, ADescription: string;
@@ -95,6 +97,33 @@ begin
   Result.Add('present', V.Present);
   Result.Add('ac', Int64(V.AC));
   Result.Add('dc', Int64(V.DC));
+end;
+
+{ Changes the active scheme in place; the snapshot holds the old values. }
+procedure TPowerSettingTweak.Apply(Params: TJSONObject);
+var
+  Scheme: TGUID;
+begin
+  Scheme := ActiveSchemeGuid;
+  if not ReadPowerSetting(Scheme, FSubGroup, FSetting).Present then
+    Exit;
+  WritePowerSetting(Scheme, FSubGroup, FSetting, FOptimalValue, FOptimalValue);
+  ActivateScheme(Scheme);
+end;
+
+{ Writes back into the scheme that was active at capture time, even if the
+  user switched plans since. }
+procedure TPowerSettingTweak.Revert(Saved: TJSONObject);
+var
+  Scheme: TGUID;
+begin
+  if not Saved.Get('present', False) then
+    Exit;
+  Scheme := StringToGUID(Saved.Strings['scheme']);
+  WritePowerSetting(Scheme, FSubGroup, FSetting,
+    DWORD(Saved.Int64s['ac']), DWORD(Saved.Int64s['dc']));
+  if IsEqualGUID(Scheme, ActiveSchemeGuid) then
+    ActivateScheme(Scheme);
 end;
 
 initialization

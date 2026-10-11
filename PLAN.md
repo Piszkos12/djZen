@@ -97,8 +97,8 @@ Expert).
 ## 3. Profiles
 
 - **Built-in profiles** (read-only, can be copied):
-  - **Offline gig** – maximum lockdown, no network
-  - **Streaming gig** – network stays, everything else off
+  - **Offline zen** – maximum lockdown, no network
+  - **Streaming zen** – network stays, everything else off
   - **Home practice** – lighter, only the things that make sounds
 - **User profiles:** copied from a built-in one or created from scratch, editable in the GUI
   (e.g. "keep Wi-Fi and Bluetooth, my controller is Bluetooth").
@@ -214,9 +214,11 @@ end;
 
 1. **M0 – Project skeleton** ✅ repo, Lazarus project, folder layout, license, README, build scripts
 2. **M1 – Core** ✅ `TTweak`, registry, engine, log, blocklist, snapshot, unit tests
-3. **M2 – Audit mode** 🔄 `Check`/`Capture` for the first tweaks (power, radios, notifications,
+3. **M2 – Audit mode** ✅ `Check`/`Capture` for the first tweaks (power, radios, notifications,
    services), GUI with impact groups and colored status (read-only, changes nothing)
-4. **M3 – Apply/Revert:** "safe" tweaks, built-in profiles, restore after reboot
+4. **M3 – Apply/Revert** ✅ power, notification/sound, service and Wi-Fi tweaks, built-in profiles,
+   restore after reboot, `/restore` switch, opt-in live round-trip test, Bluetooth via
+   Windows radio management (WinRT)
 5. **M4 – Profile editor and DJ software descriptors**
 6. **M5 – Watchdog, tray icon**
 7. **M6 – Advanced/expert tweaks, latency measurement, localization, installer**

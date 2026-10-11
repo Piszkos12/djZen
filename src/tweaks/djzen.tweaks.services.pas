@@ -14,7 +14,7 @@ uses
 
 type
   { Optimal when the service is not running. }
-  TServiceTweak = class(TAuditOnlyTweak)
+  TServiceTweak = class(TTweak)
   private
     FId, FName, FDescription, FServiceName: string;
     FImpact: TTweakImpact;
@@ -30,6 +30,8 @@ type
     function Risk: TTweakRisk; override;
     function Check: TTweakCheck; override;
     function Capture: TJSONObject; override;
+    procedure Apply(Params: TJSONObject); override;
+    procedure Revert(Saved: TJSONObject); override;
   end;
 
 constructor TServiceTweak.Create(const AId, AName, ADescription, AServiceName: string;
@@ -81,6 +83,29 @@ begin
   Result.Add('installed', Info.Installed);
   Result.Add('running', Info.State = SERVICE_RUNNING);
   Result.Add('startType', Int64(Info.StartType));
+end;
+
+{ Disabling the start type keeps trigger-started services (e.g. Windows
+  Update) from coming straight back. }
+procedure TServiceTweak.Apply(Params: TJSONObject);
+var
+  Info: TServiceInfo;
+begin
+  EnsureServiceNotProtected(FServiceName);
+  Info := QueryServiceInfo(FServiceName);
+  if not Info.Installed then
+    Exit;
+  SetServiceStartType(FServiceName, SERVICE_DISABLED);
+  StopServiceAndWait(FServiceName);
+end;
+
+procedure TServiceTweak.Revert(Saved: TJSONObject);
+begin
+  if not Saved.Get('installed', False) then
+    Exit;
+  SetServiceStartType(FServiceName, DWORD(Saved.Int64s['startType']));
+  if Saved.Get('running', False) then
+    StartServiceAndWait(FServiceName);
 end;
 
 initialization

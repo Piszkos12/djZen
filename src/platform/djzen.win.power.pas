@@ -33,6 +33,9 @@ type
   end;
 
 function ActiveSchemeGuid: TGUID;
+procedure WritePowerSetting(const Scheme, SubGroup, Setting: TGUID; AC, DC: DWORD);
+{ Re-activates the scheme so changed values take effect immediately. }
+procedure ActivateScheme(const Scheme: TGUID);
 function ReadPowerSetting(const Scheme, SubGroup, Setting: TGUID): TPowerValue;
 
 implementation
@@ -46,6 +49,39 @@ function PowerReadACValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSe
   PowerSettingGuid: PGUID; AcValueIndex: LPDWORD): DWORD; stdcall; external powrprof;
 function PowerReadDCValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
   PowerSettingGuid: PGUID; DcValueIndex: LPDWORD): DWORD; stdcall; external powrprof;
+function PowerWriteACValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
+  PowerSettingGuid: PGUID; AcValueIndex: DWORD): DWORD; stdcall; external powrprof;
+function PowerWriteDCValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
+  PowerSettingGuid: PGUID; DcValueIndex: DWORD): DWORD; stdcall; external powrprof;
+function PowerSetActiveScheme(UserRootPowerKey: HKEY; SchemeGuid: PGUID): DWORD;
+  stdcall; external powrprof;
+
+procedure WritePowerSetting(const Scheme, SubGroup, Setting: TGUID; AC, DC: DWORD);
+var
+  S, G, T: TGUID;
+  Err: DWORD;
+begin
+  S := Scheme;
+  G := SubGroup;
+  T := Setting;
+  Err := PowerWriteACValueIndex(0, @S, @G, @T, AC);
+  if Err <> ERROR_SUCCESS then
+    raise EPower.CreateFmt('PowerWriteACValueIndex failed: %s', [SysErrorMessage(Err)]);
+  Err := PowerWriteDCValueIndex(0, @S, @G, @T, DC);
+  if Err <> ERROR_SUCCESS then
+    raise EPower.CreateFmt('PowerWriteDCValueIndex failed: %s', [SysErrorMessage(Err)]);
+end;
+
+procedure ActivateScheme(const Scheme: TGUID);
+var
+  S: TGUID;
+  Err: DWORD;
+begin
+  S := Scheme;
+  Err := PowerSetActiveScheme(0, @S);
+  if Err <> ERROR_SUCCESS then
+    raise EPower.CreateFmt('PowerSetActiveScheme failed: %s', [SysErrorMessage(Err)]);
+end;
 
 function ActiveSchemeGuid: TGUID;
 var
