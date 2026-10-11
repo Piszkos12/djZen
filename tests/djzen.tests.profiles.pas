@@ -9,7 +9,8 @@ interface
 uses
   SysUtils, fpcunit, testregistry, fpjson,
   djzen.core.tweak, djzen.profiles,
-  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services;
+  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services,
+  djzen.tweaks.process;
 
 type
   TProfileTests = class(TTestCase)

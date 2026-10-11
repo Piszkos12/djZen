@@ -1,0 +1,10 @@
+{
+  "id": "mixxx",
+  "name": "Mixxx",
+  "processes": ["mixxx.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": ""
+}

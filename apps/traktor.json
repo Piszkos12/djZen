@@ -1,0 +1,10 @@
+{
+  "id": "traktor",
+  "name": "Native Instruments Traktor Pro",
+  "processes": ["Traktor.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": ""
+}

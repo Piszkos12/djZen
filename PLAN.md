@@ -100,35 +100,55 @@ Expert).
   - **Offline zen** – maximum lockdown, no network
   - **Streaming zen** – network stays, everything else off
   - **Home practice** – lighter, only the things that make sounds
-- **User profiles:** copied from a built-in one or created from scratch, editable in the GUI
-  (e.g. "keep Wi-Fi and Bluetooth, my controller is Bluetooth").
-- Format: JSON, stored in `%APPDATA%\djZen\profiles\`.
-- A profile is a list of tweak id → setting, plus the assigned DJ software descriptor(s).
-- Import / export for community sharing.
+- **User profiles:** saved from the current checkboxes and DJ software ("Save as new
+  profile…", "Save changes"), deletable, listed after the built-in ones as "(my profile)"
+  (e.g. "keep Wi-Fi and Bluetooth, my controller is Bluetooth"). A built-in name cannot be
+  reused.
+- Format: JSON, stored in `%APPDATA%\djZen\profiles\` (file name derived from the profile name):
+  ```json
+  { "name": "Club night", "order": 1000, "description": "...", "app": "traktor",
+    "tweaks": { "radio.wifi": false, "power.sleep": true } }
+  ```
+- Import / export for community sharing (any `*.json` file; imported profiles are validated
+  and copied into the user folder).
+- Selecting a profile and then changing a checkbox or the DJ software marks it "(modified)".
 
 ---
 
 ## 4. DJ software descriptors
 
 One declarative descriptor file per DJ application, no hard-coded logic. Location: `apps\*.json`
-(built-in) and `%APPDATA%\djZen\apps\` (user).
+(built-in) and `%APPDATA%\djZen\apps\` (user; a user file with the same `id` replaces the
+built-in one).
 
-Content (draft):
 ```json
 {
   "id": "rekordbox",
-  "name": "Pioneer rekordbox",
+  "name": "Pioneer DJ rekordbox",
   "processes": ["rekordbox.exe"],
   "priority": "high",
-  "protectServices": ["PioneerDJ*"],
-  "protectDevices": ["USB\\VID_2B73*"],
+  "protectServices": [],
+  "protectDevices": [],
   "needsNetwork": false,
   "notes": "..."
 }
 ```
-- Initial set: rekordbox, Serato DJ, Traktor, VirtualDJ, Mixxx, djay Pro
+- `processes`: exe name patterns (`*`, `?`), required. They are added to the runtime blocklist
+  and get the priority below.
+- `priority`: `normal`, `abovenormal` or `high` (default). **`realtime` is rejected** – it can
+  freeze the system.
+- `protectServices`: service name patterns added to the runtime blocklist.
+- `protectDevices`: device instance id patterns, reserved for the device-disabling tweaks (M6).
+- `needsNetwork`: warns before Zen mode switches Wi-Fi off.
+- Initial set: rekordbox, Serato DJ, Traktor, VirtualDJ, Mixxx, djay Pro. The djay process
+  name is not yet verified on a real installation; service and device lists are left empty
+  until verified.
 - Descriptors contain data only; an executable script language is deliberately not supported
-  (see principle 4).
+  (see principle 4). They can only add protection and request a priority up to `high`.
+- The **"Raise DJ software priority"** tweak (`process.dj-priority`) only raises, never lowers,
+  and affects the DJ software running at activation time. Revert only touches the exact
+  processes it changed (PID + creation time). Starting the DJ software after Zen mode is a job
+  for the watchdog (M5).
 
 ---
 
@@ -137,8 +157,14 @@ Content (draft):
 - When Zen mode is switched on, the original value is saved **before every change**
   (`%ProgramData%\djZen\snapshot.json`) with atomic writes (temp file + MoveFileEx write-through).
 - The snapshot is updated step by step, so an interrupted activation can still be reverted.
-- On start-up: if an active snapshot exists, the program offers to restore or continue.
-- Optional: offer the restore automatically after a reboot (scheduled task / Run key).
+- **Unclean shutdown detection:** `%ProgramData%\djZen\running.lock` exists while djZen runs and
+  is deleted on a normal exit. If Zen mode is still active at start-up and either the lock file
+  was left behind (crash, forced close, power loss) or the PC restarted since activation
+  (snapshot time < boot time), djZen offers "Restore now" / "Keep Zen mode".
+- **Closing while Zen mode is active** asks: "Restore and exit" / "Exit, keep Zen mode" / "Cancel".
+- Only one djZen instance can run (named mutex), so two instances never race on the snapshot.
+- Optional later: offer the restore automatically after a reboot without starting djZen
+  (scheduled task / Run key).
 - Restore runs in reverse order; a failed item is logged and kept for retry, the rest continues.
 - Last resort: an emergency restore command-line switch (`djZen.exe /restore`).
 
@@ -162,7 +188,10 @@ Content (draft):
 - Zen options as checkboxes, **grouped by impact** (High / Medium / Low impact), with a
   colored audit status per row; risk level and description in the tooltip
 - Preview: what will change before switching on
-- Profile editor, DJ software manager
+- Profile selector with a "…" menu: save changes, save as new, delete, import, export
+- DJ software selector (from the descriptors)
+- Remembers the last profile, DJ software and unsaved checkbox changes
+  (`%APPDATA%\djZen\settings.json`)
 - Tray icon with a minimal menu
 - In Zen mode: dark, calm, static UI – no animations, no pop-ups
 - Visible disclaimer ("use at your own risk")
@@ -219,7 +248,8 @@ end;
 4. **M3 – Apply/Revert** ✅ power, notification/sound, service and Wi-Fi tweaks, built-in profiles,
    restore after reboot, `/restore` switch, opt-in live round-trip test, Bluetooth via
    Windows radio management (WinRT)
-5. **M4 – Profile editor and DJ software descriptors**
+5. **M4 – Profiles and DJ software** ✅ user profiles (save, delete, import, export), DJ software
+   descriptors and selector, runtime protection, DJ software priority tweak
 6. **M5 – Watchdog, tray icon**
 7. **M6 – Advanced/expert tweaks, latency measurement, localization, installer**
 
@@ -229,5 +259,5 @@ end;
 
 - Installer (Inno Setup), portable exe – or both?
 - Minimum supported Windows build
-- Automatic restore offer after reboot: scheduled task or Run key?
+- Restore offer after reboot without starting djZen manually: scheduled task or Run key?
 - HKCU settings when a standard user elevates with another account's credentials

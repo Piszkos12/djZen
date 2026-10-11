@@ -15,7 +15,8 @@ interface
 uses
   SysUtils, fpcunit, testregistry, fpjson,
   djzen.core.tweak,
-  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services;
+  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services,
+  djzen.tweaks.process;
 
 type
   TLiveTests = class(TTestCase)

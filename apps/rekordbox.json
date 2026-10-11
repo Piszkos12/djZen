@@ -1,0 +1,10 @@
+{
+  "id": "rekordbox",
+  "name": "Pioneer DJ rekordbox",
+  "processes": ["rekordbox.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": "Turn needsNetwork on in a copy of this file if you use cloud library or streaming services."
+}

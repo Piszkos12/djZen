@@ -1,23 +1,26 @@
 object MainForm: TMainForm
   Left = 400
-  Height = 680
-  Top = 100
+  Height = 720
+  Top = 80
   Width = 520
   Caption = 'djZen'
-  Constraints.MinHeight = 400
-  Constraints.MinWidth = 400
+  Constraints.MinHeight = 480
+  Constraints.MinWidth = 420
   Position = poScreenCenter
   ShowHint = True
   OnCreate = FormCreate
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
   OnDestroy = FormDestroy
+  OnShow = FormShow
   object TopPanel: TPanel
     Left = 0
-    Height = 200
+    Height = 232
     Top = 0
     Width = 520
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 200
+    ClientHeight = 232
     ClientWidth = 520
     TabOrder = 0
     object ZenButton: TButton
@@ -46,46 +49,93 @@ object MainForm: TMainForm
       AnchorSideTop.Side = asrCenter
       Left = 16
       Height = 20
-      Top = 121
-      Width = 50
+      Top = 120
+      Width = 90
+      AutoSize = False
       BorderSpacing.Left = 16
       Caption = 'Profile:'
+    end
+    object ProfileMenuButton: TButton
+      AnchorSideTop.Control = ProfileCombo
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = TopPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 474
+      Height = 28
+      Hint = 'Save, delete, import or export profiles'
+      Top = 116
+      Width = 30
+      Anchors = [akTop, akRight]
+      BorderSpacing.Right = 16
+      Caption = '...'
+      OnClick = ProfileMenuButtonClick
+      TabOrder = 2
     end
     object ProfileCombo: TComboBox
       AnchorSideLeft.Control = ProfileLabel
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = ZenButton
       AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = TopPanel
-      AnchorSideRight.Side = asrBottom
-      Left = 76
+      AnchorSideRight.Control = ProfileMenuButton
+      Left = 106
       Height = 28
       Top = 116
-      Width = 428
+      Width = 362
       Anchors = [akTop, akLeft, akRight]
-      BorderSpacing.Left = 10
       BorderSpacing.Top = 10
-      BorderSpacing.Right = 16
+      BorderSpacing.Right = 6
       ItemHeight = 20
       OnChange = ProfileComboChange
       Style = csDropDownList
-      TabOrder = 2
+      TabOrder = 1
+    end
+    object AppLabel: TLabel
+      AnchorSideLeft.Control = TopPanel
+      AnchorSideTop.Control = AppCombo
+      AnchorSideTop.Side = asrCenter
+      Left = 16
+      Height = 20
+      Top = 156
+      Width = 90
+      AutoSize = False
+      BorderSpacing.Left = 16
+      Caption = 'DJ software:'
+    end
+    object AppCombo: TComboBox
+      AnchorSideLeft.Control = AppLabel
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = ProfileCombo
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = TopPanel
+      AnchorSideRight.Side = asrBottom
+      Left = 106
+      Height = 28
+      Hint = 'The selected DJ software is protected and gets a higher priority'
+      Top = 152
+      Width = 398
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 8
+      BorderSpacing.Right = 16
+      ItemHeight = 20
+      OnChange = AppComboChange
+      Style = csDropDownList
+      TabOrder = 3
     end
     object RecheckButton: TButton
-      AnchorSideTop.Control = ProfileCombo
+      AnchorSideTop.Control = AppCombo
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = TopPanel
       AnchorSideRight.Side = asrBottom
       Left = 404
       Height = 30
-      Top = 116
+      Top = 190
       Width = 100
       Anchors = [akTop, akRight]
       BorderSpacing.Top = 10
       BorderSpacing.Right = 16
       Caption = 'Check again'
       OnClick = RecheckButtonClick
-      TabOrder = 1
+      TabOrder = 4
     end
     object StatusLabel: TLabel
       AnchorSideLeft.Control = TopPanel
@@ -94,7 +144,7 @@ object MainForm: TMainForm
       AnchorSideRight.Control = RecheckButton
       Left = 16
       Height = 20
-      Top = 121
+      Top = 195
       Width = 378
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
@@ -106,7 +156,7 @@ object MainForm: TMainForm
   object DisclaimerLabel: TLabel
     Left = 16
     Height = 34
-    Top = 638
+    Top = 678
     Width = 488
     Align = alBottom
     BorderSpacing.Left = 16
@@ -119,8 +169,8 @@ object MainForm: TMainForm
   end
   object OptionsBox: TScrollBox
     Left = 0
-    Height = 478
-    Top = 160
+    Height = 446
+    Top = 232
     Width = 520
     HorzScrollBar.Visible = False
     VertScrollBar.Increment = 20
@@ -134,5 +184,33 @@ object MainForm: TMainForm
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
     TabOrder = 1
+  end
+  object ProfileMenu: TPopupMenu
+    OnPopup = ProfileMenuPopup
+    Left = 440
+    Top = 300
+    object MenuSave: TMenuItem
+      Caption = 'Save changes'
+      OnClick = MenuSaveClick
+    end
+    object MenuSaveAs: TMenuItem
+      Caption = 'Save as new profile...'
+      OnClick = MenuSaveAsClick
+    end
+    object MenuDelete: TMenuItem
+      Caption = 'Delete profile'
+      OnClick = MenuDeleteClick
+    end
+    object MenuSep: TMenuItem
+      Caption = '-'
+    end
+    object MenuImport: TMenuItem
+      Caption = 'Import profile...'
+      OnClick = MenuImportClick
+    end
+    object MenuExport: TMenuItem
+      Caption = 'Export profile...'
+      OnClick = MenuExportClick
+    end
   end
 end

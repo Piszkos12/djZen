@@ -1,0 +1,10 @@
+{
+  "id": "djay",
+  "name": "Algoriddim djay Pro",
+  "processes": ["djay*.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": "Process name not yet verified on a real installation. Streaming services need the network."
+}

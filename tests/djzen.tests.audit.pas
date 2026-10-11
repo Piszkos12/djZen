@@ -10,7 +10,8 @@ interface
 uses
   SysUtils, fpcunit, testregistry, fpjson,
   djzen.core.tweak,
-  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services;
+  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services,
+  djzen.tweaks.process;
 
 type
   TAuditTests = class(TTestCase)
@@ -18,6 +19,7 @@ type
     procedure AllChecksRunWithoutError;
     procedure AllCapturesProduceJson;
     procedure IdsAreUniqueAndNamespaced;
+    procedure PriorityCheckReadsRunningProcess;
   end;
 
 implementation
@@ -60,6 +62,21 @@ begin
   // uniqueness is enforced by the registry; check the "<group>.<name>" format
   for I := 0 to Tweaks.Count - 1 do
     AssertTrue(Tweaks[I].Id, Pos('.', Tweaks[I].Id) > 1);
+end;
+
+{ Read-only: explorer.exe always runs, so the check must see it. }
+procedure TAuditTests.PriorityCheckReadsRunningProcess;
+var
+  C: TTweakCheck;
+begin
+  SetDJAppTarget('Explorer', ['explorer.exe'], 'high');
+  try
+    C := Tweaks.Find('process.dj-priority').Check;
+    WriteLn('  priority check on explorer.exe: ', TweakStatusText[C.Status], ' - ', C.Detail);
+    AssertTrue(C.Detail, C.Status in [tsOptimal, tsNotOptimal]);
+  finally
+    SetDJAppTarget('', [], 'high');
+  end;
 end;
 
 initialization

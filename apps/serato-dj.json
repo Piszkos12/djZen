@@ -1,0 +1,10 @@
+{
+  "id": "serato-dj",
+  "name": "Serato DJ Pro / Lite",
+  "processes": ["Serato DJ Pro.exe", "Serato DJ Lite.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": "Streaming integrations (Beatport, Tidal, SoundCloud) need the network."
+}

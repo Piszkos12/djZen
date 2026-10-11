@@ -1,0 +1,10 @@
+{
+  "id": "virtualdj",
+  "name": "VirtualDJ",
+  "processes": ["virtualdj*.exe"],
+  "priority": "high",
+  "protectServices": [],
+  "protectDevices": [],
+  "needsNetwork": false,
+  "notes": "Online content (iDJPool, streaming) needs the network."
+}
