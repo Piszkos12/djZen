@@ -9,7 +9,11 @@ unit djzen.core.engine;
     the user can retry. The snapshot file is deleted once it is empty.
 
   Entries whose Apply failed are reverted too: Apply may have changed part of
-  the state before failing, and the captured original is still valid. }
+  the state before failing, and the captured original is still valid.
+
+  Each engine has a scope: the user engine (GUI process) only handles tweaks
+  that do not need admin rights, the admin engine (elevated helper) only the
+  ones that do. A snapshot entry of the wrong scope is refused, never reverted. }
 
 {$mode objfpc}{$H+}
 
@@ -21,6 +25,8 @@ uses
 type
   EZenEngine = class(Exception);
 
+  TEngineScope = (esUser, esAdmin);
+
   TZenResult = record
     Succeeded: Integer;
     Failed: Integer;
@@ -31,8 +37,12 @@ type
   private
     FRegistry: TTweakRegistry;
     FSnapshotFile: string;
+    FScope: TEngineScope;
+    function InScope(Tweak: TTweak): Boolean;
   public
-    constructor Create(ARegistry: TTweakRegistry; const ASnapshotFile: string);
+    constructor Create(ARegistry: TTweakRegistry; const ASnapshotFile: string;
+      AScope: TEngineScope = esUser);
+    property Scope: TEngineScope read FScope;
     function IsActive: Boolean;
     function ActiveProfile: string;
     { ISO timestamp of the activation, '' if not active. }
@@ -55,11 +65,18 @@ begin
   LogError(Msg);
 end;
 
-constructor TZenEngine.Create(ARegistry: TTweakRegistry; const ASnapshotFile: string);
+constructor TZenEngine.Create(ARegistry: TTweakRegistry; const ASnapshotFile: string;
+  AScope: TEngineScope);
 begin
   inherited Create;
   FRegistry := ARegistry;
   FSnapshotFile := ASnapshotFile;
+  FScope := AScope;
+end;
+
+function TZenEngine.InScope(Tweak: TTweak): Boolean;
+begin
+  Result := Tweak.RequiresAdmin = (FScope = esAdmin);
 end;
 
 function TZenEngine.IsActive: Boolean;
@@ -122,7 +139,7 @@ begin
     for I := 0 to FRegistry.Count - 1 do
     begin
       Tweak := FRegistry[I];
-      if not Tweak.CanApply then
+      if not Tweak.CanApply or not InScope(Tweak) then
         Continue;
       Setting := Settings.Find(Tweak.Id);
       if Setting is TJSONObject then
@@ -187,6 +204,11 @@ begin
       if Tweak = nil then
       begin
         AddError(Result, Format('%s: unknown tweak, cannot revert', [Id]));
+        Continue;
+      end;
+      if not InScope(Tweak) then
+      begin
+        AddError(Result, Format('%s: not handled by this process, cannot revert', [Id]));
         Continue;
       end;
       try

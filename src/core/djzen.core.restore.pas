@@ -15,7 +15,8 @@ function RunCommandLineRestore: Integer;
 implementation
 
 uses
-  Windows, SysUtils, djzen.core.tweak, djzen.core.engine, djzen.core.paths, djzen.core.log;
+  Windows, SysUtils, djzen.core.tweak, djzen.core.engine, djzen.core.paths, djzen.core.log,
+  djzen.core.elevation;
 
 function HasSwitch(const Name: string): Boolean;
 var
@@ -42,24 +43,24 @@ begin
   Result := HasSwitch('restore');
 end;
 
+{ Restores the user part in this process, then the admin part through the
+  elevated helper (one UAC prompt, only if the admin part is active). }
 function RunCommandLineRestore: Integer;
 var
   Engine: TZenEngine;
   R: TZenResult;
   Msg: string;
   E: string;
+  HelperCode: Integer;
 begin
-  LogInit(LogFile);
+  LogInit(UserLogFile);
   LogInfo('Command-line restore requested');
-  Engine := TZenEngine.Create(Tweaks, SnapshotFile);
+  Result := 0;
+  Msg := '';
+  Engine := TZenEngine.Create(Tweaks, UserSnapshotFile, esUser);
   try
     try
-      if not Engine.IsActive then
-      begin
-        Msg := 'Zen mode is not active - nothing to restore.';
-        Result := 0;
-      end
-      else
+      if Engine.IsActive then
       begin
         R := Engine.Deactivate;
         Msg := Format('Restored %d setting(s).', [R.Succeeded]);
@@ -68,9 +69,8 @@ begin
           Msg := Msg + LineEnding + Format('%d failed:', [R.Failed]);
           for E in R.Errors do
             Msg := Msg + LineEnding + '  ' + E;
-          Msg := Msg + LineEnding + LineEnding + 'Run "djZen.exe /restore" again to retry.';
+          Result := 1;
         end;
-        Result := Ord(R.Failed > 0);
       end;
     except
       on Ex: Exception do
@@ -83,6 +83,21 @@ begin
   finally
     Engine.Free;
   end;
+
+  if AdminSnapshotExists then
+  begin
+    HelperCode := LaunchHelperDeactivate;
+    if Msg <> '' then
+      Msg := Msg + LineEnding;
+    Msg := Msg + 'Admin options: ' + HelperResultText(HelperCode) + '.';
+    if HelperCode <> HelperOk then
+      Result := 1;
+  end;
+
+  if Msg = '' then
+    Msg := 'Zen mode is not active - nothing to restore.'
+  else if Result <> 0 then
+    Msg := Msg + LineEnding + LineEnding + 'Run "djZen.exe /restore" again to retry.';
 
   if not HasSwitch('quiet') then
     MessageBoxW(0, PWideChar(UnicodeString(Msg)), 'djZen restore',

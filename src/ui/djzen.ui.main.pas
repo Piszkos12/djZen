@@ -52,7 +52,8 @@ type
     procedure MenuImportClick(Sender: TObject);
     procedure MenuExportClick(Sender: TObject);
   private
-    FEngine: TZenEngine;
+    FEngine: TZenEngine;        // user part, this process
+    FAdminEngine: TZenEngine;   // admin part: read-only here, changed by the elevated helper
     FRows: TList;   // TOptionRow
     FProfiles: TProfileList;
     FApps: TDJAppList;
@@ -78,7 +79,10 @@ type
     procedure OptionClick(Sender: TObject);
     procedure RunChecks;
     procedure UpdateState;
-    procedure ShowResult(const What: string; const R: TZenResult);
+    procedure ShowResult(const What: string; const R: TZenResult; const AdminNote: string = '');
+    function ZenActive: Boolean;
+    function ZenSince: string;
+    function ZenProfile: string;
   end;
 
 var
@@ -88,7 +92,7 @@ implementation
 
 uses
   fpjson, djzen.core.version, djzen.core.paths, djzen.core.log, djzen.core.blocklist,
-  djzen.core.session, djzen.core.settings, djzen.tweaks.process;
+  djzen.core.session, djzen.core.settings, djzen.core.elevation, djzen.tweaks.process;
 
 {$R *.lfm}
 
@@ -100,7 +104,8 @@ const
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   Caption := AppName + ' ' + AppVersion;
-  FEngine := TZenEngine.Create(Tweaks, SnapshotFile);
+  FEngine := TZenEngine.Create(Tweaks, UserSnapshotFile, esUser);
+  FAdminEngine := TZenEngine.Create(Tweaks, AdminSnapshotFile, esAdmin);
   FRows := TList.Create;
   FProfiles := TProfileList.Create(True);
   FApps := TDJAppList.Create(True);
@@ -130,10 +135,10 @@ var
   Rebooted: Boolean;
   Reason: string;
 begin
-  if not FEngine.IsActive then
+  if not ZenActive then
     Exit;
   try
-    Since := ParseIsoLocal(FEngine.ActiveSince);
+    Since := ParseIsoLocal(ZenSince);
     Rebooted := (Since > 0) and (Since < SystemBootTime);
     if PreviousSessionUnclean then
       Reason := 'djZen did not shut down properly last time (crash, forced close or power loss).'
@@ -144,7 +149,7 @@ begin
     LogInfo('Offering restore at start-up: ' + Reason);
     if QuestionDlg('djZen', Reason + LineEnding + LineEnding +
       Format('Zen mode is still active (since %s, profile "%s").',
-        [StringReplace(FEngine.ActiveSince, 'T', ' ', []), FEngine.ActiveProfile]) +
+        [StringReplace(ZenSince, 'T', ' ', []), ZenProfile]) +
       LineEnding + 'Restore your original settings now?',
       mtWarning, [mrYes, 'Restore now', mrNo, 'Keep Zen mode'], 0) = mrYes then
       DoRestore;
@@ -159,7 +164,7 @@ end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  if not FEngine.IsActive then
+  if not ZenActive then
     Exit;
   case QuestionDlg('djZen', 'Zen mode is active.' + LineEnding + LineEnding +
     'Restore your original settings before exiting?',
@@ -167,7 +172,7 @@ begin
     mrYes:
       begin
         DoRestore;
-        CanClose := not FEngine.IsActive;   // stay open if something could not be restored
+        CanClose := not ZenActive;   // stay open if something could not be restored
       end;
     mrNo:
       CanClose := True;
@@ -181,18 +186,23 @@ begin
   SaveUiSettings;
 end;
 
+{ User part first (no prompt), then the admin part through UAC if active. }
 procedure TMainForm.DoRestore;
 var
   R: TZenResult;
+  AdminNote: string;
 begin
   Screen.BeginWaitCursor;
   try
     R := FEngine.Deactivate;
+    AdminNote := '';
+    if AdminSnapshotExists then
+      AdminNote := HelperResultText(LaunchHelperDeactivate);
   finally
     Screen.EndWaitCursor;
   end;
   UpdateState;
-  ShowResult('Restored', R);
+  ShowResult('Restored', R, AdminNote);
   RunChecks;
 end;
 
@@ -271,6 +281,7 @@ begin
   FProfiles.Free;
   FApps.Free;
   FEngine.Free;
+  FAdminEngine.Free;
 end;
 
 { One group box per impact level, one row per tweak. Empty groups are not shown. }
@@ -324,6 +335,8 @@ begin
       Row.CheckBox := TCheckBox.Create(Self);
       Row.CheckBox.Align := alClient;
       Row.CheckBox.Caption := Tweak.Name;
+      if Tweak.RequiresAdmin then
+        Row.CheckBox.Caption := Tweak.Name + '  (admin)';
       Row.CheckBox.OnClick := @OptionClick;
       Row.CheckBox.Parent := Panel;
 
@@ -694,6 +707,8 @@ begin
       Tip := Row.Tweak.Description + LineEnding + LineEnding +
         'Status: ' + C.Detail + LineEnding +
         'Risk: ' + TweakRiskText[Row.Tweak.Risk] + ' | ' + TweakCategoryText[Row.Tweak.Category];
+      if Row.Tweak.RequiresAdmin then
+        Tip := Tip + LineEnding + '(Needs administrator rights: Windows asks for permission when Zen mode starts and stops)';
       if not Row.Tweak.CanApply then
         Tip := Tip + LineEnding + '(Audit only - applying is not implemented yet)';
       Row.CheckBox.Hint := Tip;
@@ -710,12 +725,12 @@ var
   Row: TOptionRow;
   I: Integer;
 begin
-  ZenOn := FEngine.IsActive;
+  ZenOn := ZenActive;
   if ZenOn then
   begin
     ZenButton.Caption := 'ZEN ON - click to restore';
     StatusLabel.Caption := Format('Active since %s - %s',
-      [StringReplace(FEngine.ActiveSince, 'T', ' ', []), FEngine.ActiveProfile]);
+      [StringReplace(ZenSince, 'T', ' ', []), ZenProfile]);
   end
   else
   begin
@@ -732,12 +747,41 @@ begin
   AppCombo.Enabled := not ZenOn;
 end;
 
-procedure TMainForm.ShowResult(const What: string; const R: TZenResult);
+procedure TMainForm.ShowResult(const What: string; const R: TZenResult; const AdminNote: string);
+var
+  S: string;
 begin
   if R.Failed = 0 then
-    StatusLabel.Caption := Format('%s: %d OK', [What, R.Succeeded])
+    S := Format('%s: %d OK', [What, R.Succeeded])
   else
-    StatusLabel.Caption := Format('%s: %d OK, %d failed - see log', [What, R.Succeeded, R.Failed]);
+    S := Format('%s: %d OK, %d failed - see log', [What, R.Succeeded, R.Failed]);
+  if AdminNote <> '' then
+    S := S + '; admin options: ' + AdminNote;
+  StatusLabel.Caption := S;
+  StatusLabel.Hint := S;
+end;
+
+function TMainForm.ZenActive: Boolean;
+begin
+  Result := FEngine.IsActive or AdminSnapshotExists;
+end;
+
+{ The user snapshot has the profile name; with admin options only, the
+  admin snapshot (readable by users) is the only one. }
+function TMainForm.ZenSince: string;
+begin
+  if FEngine.IsActive then
+    Result := FEngine.ActiveSince
+  else
+    Result := FAdminEngine.ActiveSince;
+end;
+
+function TMainForm.ZenProfile: string;
+begin
+  if FEngine.IsActive then
+    Result := FEngine.ActiveProfile
+  else
+    Result := 'admin options only';
 end;
 
 procedure TMainForm.RecheckButtonClick(Sender: TObject);
@@ -753,8 +797,10 @@ var
   R: TZenResult;
   I: Integer;
   WifiOff: Boolean;
+  AdminIds: TStringArray;
+  AdminNote: string;
 begin
-  if not FEngine.IsActive then
+  if not ZenActive then
   begin
     // Warn before cutting the network the selected DJ software relies on.
     App := SelectedApp;
@@ -776,32 +822,38 @@ begin
   Screen.BeginWaitCursor;
   try
     try
-      if FEngine.IsActive then
-      begin
-        R := FEngine.Deactivate;
-        UpdateState;
-        ShowResult('Restored', R);
-      end
+      if ZenActive then
+        DoRestore
       else
       begin
         ClearRuntimeProtection;
         ProtectDJApp(SelectedApp);
         Settings := TJSONObject.Create;
         try
+          AdminIds := nil;
           for I := 0 to FRows.Count - 1 do
           begin
             Row := TOptionRow(FRows[I]);
             Settings.Add(Row.Tweak.Id, Row.CheckBox.Checked);
+            if Row.CheckBox.Checked and Row.Tweak.RequiresAdmin then
+            begin
+              SetLength(AdminIds, Length(AdminIds) + 1);
+              AdminIds[High(AdminIds)] := Row.Tweak.Id;
+            end;
           end;
+          // user part in this process (skips admin tweaks), admin part via UAC
           R := FEngine.Activate(CurrentProfileName, Settings);
         finally
           Settings.Free;
         end;
+        AdminNote := '';
+        if Length(AdminIds) > 0 then
+          AdminNote := HelperResultText(LaunchHelperActivate(AdminIds));
         UpdateState;
-        ShowResult('Zen mode', R);
+        ShowResult('Zen mode', R, AdminNote);
         SaveUiSettings;
+        RunChecks;
       end;
-      RunChecks;
     except
       on E: Exception do
       begin

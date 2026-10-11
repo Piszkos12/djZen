@@ -24,7 +24,7 @@ set "ZIP=dist\djZen-win64.zip"
 if exist "%ZIP%" del /q "%ZIP%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\make-zip.ps1" ^
-  -Source "%~dp0bin\prod" -Destination "%~dp0%ZIP%"
+  -Source "%~dp0bin\prod" -Destination "%~dp0%ZIP%" -Root djZen
 if errorlevel 1 (
   echo [ERROR] Creating %ZIP% failed.
   exit /b 1
@@ -32,5 +32,5 @@ if errorlevel 1 (
 
 echo.
 echo Release package: %ZIP%
-echo Next: create a GitHub Release with a version tag (e.g. v0.1.0) and attach this file.
+echo Next: create a GitHub Release with a version tag (e.g. v0.1.1) and attach this file.
 exit /b 0

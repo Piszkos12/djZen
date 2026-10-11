@@ -1,0 +1,11 @@
+# Normalize text files in the repository
+* text=auto
+
+# cmd.exe misparses labels and blocks in batch files with LF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary
+*.ico binary
+*.png binary
+*.res binary

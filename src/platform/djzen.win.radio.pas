@@ -47,7 +47,7 @@ procedure SetWinRadioState(Kind: TRadioKind; const Name: string; On: Boolean);
 implementation
 
 uses
-  Classes, djzen.win.winrt;
+  Classes, djzen.win.winrt, djzen.win.security;
 
 { --- WLAN API ------------------------------------------------------------ }
 
@@ -109,7 +109,7 @@ var
 begin
   Result := False;
   W := Default(TWlan);
-  W.Lib := LoadLibrary('wlanapi.dll');
+  W.Lib := LoadSystemLibrary('wlanapi.dll');
   if W.Lib = 0 then
     Exit;
   Pointer(W.OpenHandle) := GetProcAddress(W.Lib, 'WlanOpenHandle');

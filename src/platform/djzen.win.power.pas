@@ -40,29 +40,59 @@ function ReadPowerSetting(const Scheme, SubGroup, Setting: TGUID): TPowerValue;
 
 implementation
 
-const
-  powrprof = 'powrprof.dll';
+uses
+  djzen.win.security;
 
-function PowerGetActiveScheme(UserRootPowerKey: HKEY; ActivePolicyGuid: Pointer): DWORD;
-  stdcall; external powrprof;
-function PowerReadACValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
-  PowerSettingGuid: PGUID; AcValueIndex: LPDWORD): DWORD; stdcall; external powrprof;
-function PowerReadDCValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
-  PowerSettingGuid: PGUID; DcValueIndex: LPDWORD): DWORD; stdcall; external powrprof;
-function PowerWriteACValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
-  PowerSettingGuid: PGUID; AcValueIndex: DWORD): DWORD; stdcall; external powrprof;
-function PowerWriteDCValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
-  PowerSettingGuid: PGUID; DcValueIndex: DWORD): DWORD; stdcall; external powrprof;
-function PowerSetActiveScheme(UserRootPowerKey: HKEY; SchemeGuid: PGUID): DWORD;
-  stdcall; external powrprof;
+{ powrprof.dll is not a KnownDLL: a static import would be searched in the
+  exe's folder first (DLL planting, e.g. in Downloads). It is loaded from
+  System32 only, on first use. }
+type
+  TPowerGetActiveScheme = function(UserRootPowerKey: HKEY; ActivePolicyGuid: Pointer): DWORD; stdcall;
+  TPowerReadValueIndex = function(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
+    PowerSettingGuid: PGUID; ValueIndex: LPDWORD): DWORD; stdcall;
+  TPowerWriteValueIndex = function(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerSettingsGuid,
+    PowerSettingGuid: PGUID; ValueIndex: DWORD): DWORD; stdcall;
+  TPowerSetActiveScheme = function(UserRootPowerKey: HKEY; SchemeGuid: PGUID): DWORD; stdcall;
+
+var
+  PowrProf: HMODULE;
+  PowerGetActiveScheme: TPowerGetActiveScheme;
+  PowerReadACValueIndex, PowerReadDCValueIndex: TPowerReadValueIndex;
+  PowerWriteACValueIndex, PowerWriteDCValueIndex: TPowerWriteValueIndex;
+  PowerSetActiveScheme: TPowerSetActiveScheme;
+
 { LocalFree taking a pointer: the memory comes back from powrprof as a pointer. }
 function LocalFreePtr(Mem: Pointer): Pointer; stdcall; external 'kernel32.dll' name 'LocalFree';
+
+procedure LoadPowrProf;
+begin
+  if PowrProf <> 0 then
+    Exit;
+  PowrProf := LoadSystemLibrary('powrprof.dll');
+  if PowrProf = 0 then
+    raise EPower.CreateFmt('Cannot load powrprof.dll: %s', [SysErrorMessage(GetLastError)]);
+  Pointer(PowerGetActiveScheme) := GetProcAddress(PowrProf, 'PowerGetActiveScheme');
+  Pointer(PowerReadACValueIndex) := GetProcAddress(PowrProf, 'PowerReadACValueIndex');
+  Pointer(PowerReadDCValueIndex) := GetProcAddress(PowrProf, 'PowerReadDCValueIndex');
+  Pointer(PowerWriteACValueIndex) := GetProcAddress(PowrProf, 'PowerWriteACValueIndex');
+  Pointer(PowerWriteDCValueIndex) := GetProcAddress(PowrProf, 'PowerWriteDCValueIndex');
+  Pointer(PowerSetActiveScheme) := GetProcAddress(PowrProf, 'PowerSetActiveScheme');
+  if not Assigned(PowerGetActiveScheme) or not Assigned(PowerReadACValueIndex) or
+     not Assigned(PowerReadDCValueIndex) or not Assigned(PowerWriteACValueIndex) or
+     not Assigned(PowerWriteDCValueIndex) or not Assigned(PowerSetActiveScheme) then
+  begin
+    FreeLibrary(PowrProf);
+    PowrProf := 0;
+    raise EPower.Create('powrprof.dll lacks a required function');
+  end;
+end;
 
 procedure WritePowerSetting(const Scheme, SubGroup, Setting: TGUID; AC, DC: DWORD);
 var
   S, G, T: TGUID;
   Err: DWORD;
 begin
+  LoadPowrProf;
   S := Scheme;
   G := SubGroup;
   T := Setting;
@@ -79,6 +109,7 @@ var
   S: TGUID;
   Err: DWORD;
 begin
+  LoadPowrProf;
   S := Scheme;
   Err := PowerSetActiveScheme(0, @S);
   if Err <> ERROR_SUCCESS then
@@ -90,6 +121,7 @@ var
   P: PGUID;
   Err: DWORD;
 begin
+  LoadPowrProf;
   P := nil;
   Err := PowerGetActiveScheme(0, @P);
   if Err <> ERROR_SUCCESS then
@@ -103,6 +135,7 @@ var
   S, G, T: TGUID;
   Err: DWORD;
 begin
+  LoadPowrProf;
   S := Scheme;
   G := SubGroup;
   T := Setting;

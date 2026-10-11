@@ -2,10 +2,9 @@ unit djzen.tweaks.notify;
 
 { Things that make sounds or change the volume on their own.
 
-  Note: these are per-user settings in HKEY_CURRENT_USER. djZen runs elevated,
-  which is the same user when an administrator account confirms the UAC
-  prompt, but not when a standard user elevates with another account's
-  credentials. }
+  These are per-user settings in HKEY_CURRENT_USER. They need no admin rights
+  and always run in the (non-elevated) GUI process, so they change the
+  settings of the user who is actually logged on. }
 
 {$mode objfpc}{$H+}
 

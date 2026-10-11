@@ -3,10 +3,11 @@ unit djzen.tests.live;
 { LIVE round-trip test: really applies and reverts every applicable tweak on
   this machine, then checks that the captured state is identical to before.
 
-  It changes system settings, so it only runs when explicitly requested:
-    - environment variable DJZEN_LIVE_TESTS=1
-    - from an elevated (administrator) command prompt
-  Example:  set "DJZEN_LIVE_TESTS=1" && tests.bat }
+  It changes system settings, so it only runs when explicitly requested with
+  the environment variable DJZEN_LIVE_TESTS=1:
+    set "DJZEN_LIVE_TESTS=1" && tests.bat
+  From an elevated prompt every tweak must work. From a normal prompt it is a
+  privilege probe: it lists which tweaks work without admin rights. }
 
 {$mode objfpc}{$H+}
 
@@ -31,17 +32,26 @@ uses
 
 function IsUserAnAdmin: BOOL; stdcall; external 'shell32.dll';
 
-{ Apply errors are reported but do not stop the loop: every tweak that was
-  applied must still be reverted. }
+{ Elevated: every tweak must apply, and revert to exactly the captured state.
+  Not elevated (privilege probe): a failing apply means "needs admin" and is
+  only reported; the state must still be unchanged afterwards. }
 procedure TLiveTests.ApplyThenRevertRestoresEveryTweak;
 var
   I: Integer;
   T: TTweak;
   Before, After: TJSONObject;
   Params: TJSONObject;
-  Failures, Line: string;
+  Failures, Line, NoAdmin, NeedsAdmin, RevertError: string;
+  Elevated, Applied: Boolean;
 begin
+  Elevated := IsUserAnAdmin;
+  if Elevated then
+    WriteLn('  Live test: ELEVATED')
+  else
+    WriteLn('  Live test: NOT elevated (privilege probe)');
   Failures := '';
+  NoAdmin := '';
+  NeedsAdmin := '';
   Params := TJSONObject.Create;
   try
     for I := 0 to Tweaks.Count - 1 do
@@ -52,38 +62,50 @@ begin
       Before := T.Capture;
       try
         Line := Format('  %-32s ', [T.Id]);
+        Applied := False;
         try
           T.Apply(Params);
+          Applied := True;
           Line := Line + 'applied -> ' + TweakStatusText[T.Check.Status];
+          NoAdmin := NoAdmin + '    ' + T.Id + LineEnding;
         except
           on E: Exception do
           begin
             Line := Line + 'APPLY FAILED: ' + E.Message;
-            Failures := Failures + T.Id + ' apply: ' + E.Message + LineEnding;
+            if Elevated then
+              Failures := Failures + T.Id + ' apply: ' + E.Message + LineEnding
+            else
+              NeedsAdmin := NeedsAdmin + '    ' + T.Id + ' (' + E.Message + ')' + LineEnding;
           end;
         end;
+
+        RevertError := '';
         try
           T.Revert(Before);
-          After := T.Capture;
-          try
-            if After.AsJSON = Before.AsJSON then
-              Line := Line + ', reverted OK'
-            else
-            begin
-              Line := Line + ', REVERT MISMATCH';
-              Failures := Failures + T.Id + ' revert mismatch:' + LineEnding +
-                '    before: ' + Before.AsJSON + LineEnding +
-                '    after:  ' + After.AsJSON + LineEnding;
-            end;
-          finally
-            After.Free;
-          end;
         except
           on E: Exception do
+            RevertError := E.Message;
+        end;
+        if (RevertError <> '') and (Elevated or Applied) then
+        begin
+          Line := Line + ', REVERT FAILED: ' + RevertError;
+          Failures := Failures + T.Id + ' revert: ' + RevertError + LineEnding;
+        end;
+
+        // whatever happened, the system must be back in its original state
+        After := T.Capture;
+        try
+          if After.AsJSON = Before.AsJSON then
+            Line := Line + ', state OK'
+          else
           begin
-            Line := Line + ', REVERT FAILED: ' + E.Message;
-            Failures := Failures + T.Id + ' revert: ' + E.Message + LineEnding;
+            Line := Line + ', STATE CHANGED';
+            Failures := Failures + T.Id + ' state changed:' + LineEnding +
+              '    before: ' + Before.AsJSON + LineEnding +
+              '    after:  ' + After.AsJSON + LineEnding;
           end;
+        finally
+          After.Free;
         end;
         WriteLn(Line);
       finally
@@ -93,17 +115,21 @@ begin
   finally
     Params.Free;
   end;
+  if not Elevated then
+  begin
+    WriteLn;
+    WriteLn('  Works WITHOUT admin rights:');
+    Write(NoAdmin);
+    WriteLn('  Needs admin rights:');
+    Write(NeedsAdmin);
+    WriteLn;
+  end;
   AssertEquals('Live round-trip failures', '', Failures);
 end;
 
 initialization
   // Trim: 'set X=1 && tests.bat' in cmd stores "1 " with the trailing space.
   if Trim(SysUtils.GetEnvironmentVariable('DJZEN_LIVE_TESTS')) = '1' then
-  begin
-    if IsUserAnAdmin then
-      RegisterTest(TLiveTests)
-    else
-      WriteLn('DJZEN_LIVE_TESTS=1 ignored: live tests need an elevated (administrator) prompt.');
-  end;
+    RegisterTest(TLiveTests);
 
 end.

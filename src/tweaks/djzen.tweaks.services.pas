@@ -28,6 +28,7 @@ type
     function Category: TTweakCategory; override;
     function Impact: TTweakImpact; override;
     function Risk: TTweakRisk; override;
+    function RequiresAdmin: Boolean; override;
     function Check: TTweakCheck; override;
     function Capture: TJSONObject; override;
     procedure Apply(Params: TJSONObject); override;
@@ -54,6 +55,7 @@ function TServiceTweak.Description: string; begin Result := FDescription; end;
 function TServiceTweak.Category: TTweakCategory; begin Result := tcServices; end;
 function TServiceTweak.Impact: TTweakImpact; begin Result := FImpact; end;
 function TServiceTweak.Risk: TTweakRisk; begin Result := FRisk; end;
+function TServiceTweak.RequiresAdmin: Boolean; begin Result := True; end;
 
 function TServiceTweak.Check: TTweakCheck;
 var

@@ -7,7 +7,8 @@
 - **Language / UI:** Free Pascal + Lazarus (LCL), native Win32 GUI
 - **Platform:** Windows 10 / 11 (x64)
 - **License:** open source, public repo, GPL-3.0
-- **Privileges:** administrator (manifest: `requireAdministrator`)
+- **Privileges:** normal user (manifest: `asInvoker`); admin-only tweaks run in a small elevated
+  helper started through UAC (see section 5a)
 - **Liability:** none. Users decide for themselves whether to use djZen; it is provided "as is"
   (see README and GPL-3.0 sections 15–16).
 
@@ -154,19 +155,53 @@ built-in one).
 
 ## 5. Snapshot and restore
 
-- When Zen mode is switched on, the original value is saved **before every change**
-  (`%ProgramData%\djZen\snapshot.json`) with atomic writes (temp file + MoveFileEx write-through).
+- When Zen mode is switched on, the original value is saved **before every change** with
+  atomic writes (temp file + MoveFileEx write-through). There are two snapshots: the user part
+  in `%LOCALAPPDATA%\djZen\snapshot.json`, the admin part in `%ProgramData%\djZen\snapshot.json`.
 - The snapshot is updated step by step, so an interrupted activation can still be reverted.
-- **Unclean shutdown detection:** `%ProgramData%\djZen\running.lock` exists while djZen runs and
+- **Unclean shutdown detection:** `%LOCALAPPDATA%\djZen\running.lock` exists while djZen runs and
   is deleted on a normal exit. If Zen mode is still active at start-up and either the lock file
   was left behind (crash, forced close, power loss) or the PC restarted since activation
   (snapshot time < boot time), djZen offers "Restore now" / "Keep Zen mode".
 - **Closing while Zen mode is active** asks: "Restore and exit" / "Exit, keep Zen mode" / "Cancel".
-- Only one djZen instance can run (named mutex), so two instances never race on the snapshot.
+- Only one djZen instance per logon session can run (`Local\` named mutex), so two instances
+  never race on the snapshot.
 - Optional later: offer the restore automatically after a reboot without starting djZen
   (scheduled task / Run key).
 - Restore runs in reverse order; a failed item is logged and kept for retry, the rest continues.
-- Last resort: an emergency restore command-line switch (`djZen.exe /restore`).
+- Last resort: an emergency restore command-line switch (`djZen.exe /restore`). It restores the
+  user part directly and starts the elevated helper only if the admin part is active.
+
+---
+
+## 5a. Privilege separation
+
+Measured with the live privilege probe (`tests.bat` with `DJZEN_LIVE_TESTS=1` from a normal
+prompt): of the 15 tweaks only the 3 service tweaks need admin rights (`RequiresAdmin`).
+Notifications, sounds, ducking, all power settings, Wi-Fi, Bluetooth and the DJ software
+priority work as the normal user.
+
+- `djZen.exe` runs **asInvoker**. GUI, profiles, DJ software descriptors, settings and the user
+  snapshot are handled with user rights, so untrusted user files never reach admin code. HKCU
+  tweaks always hit the right user.
+- **Elevated helper:** `djZen.exe /elevated activate <id,...>` / `djZen.exe /elevated deactivate`,
+  started with ShellExecuteEx "runas" (one UAC prompt per start/restore, only if an admin tweak
+  is selected or active). It reads nothing but its validated command line (ids must be admin
+  tweaks compiled into djZen) and its own snapshot. Exit codes: 0 OK, 1 partial, 2 bad args,
+  3 not elevated, 4 error. Log: `%ProgramData%\djZen\logs\djzen-admin.log`.
+- **Engine scopes:** the user engine only handles non-admin tweaks, the admin engine only admin
+  tweaks; a snapshot entry of the wrong scope is refused, never reverted.
+- **Admin data folder hardening:** before writing, the helper gives `%ProgramData%\djZen` a
+  protected ACL (SYSTEM/Administrators full, Users read; by default Users could create files
+  there), refuses to write through junctions/symlinks, and moves aside any of its fixed file
+  names that are reparse points or not owned by Administrators/SYSTEM.
+- **DLL loading:** `SetDefaultDllDirectories(System32)` at start-up; `powrprof.dll` and
+  `wlanapi.dll` are loaded from System32 only (no static import). The remaining non-KnownDLL
+  static import is `version.dll` (LCL; `comctl32.dll` comes from WinSxS via the manifest), so
+  the GUI refuses to start the helper while any `.dll` is next to `djZen.exe`.
+- **Residual risk (portable zip):** if `djZen.exe` sits in a folder writable by other software
+  (Downloads, Desktop), that software could replace the exe itself before the next UAC prompt.
+  Fully solved only by an installer to `Program Files` plus code signing (M6 / Release).
 
 ---
 
@@ -254,9 +289,11 @@ end;
    descriptors and selector, runtime protection, DJ software priority tweak
 6. **M5 – Watchdog, tray icon**
 7. **M6 – Advanced/expert tweaks, latency measurement, localization, installer**
-8. **Release** 🔄 **v0.1.0 published.** Manual flow: `release.bat` → GitHub Release asset
+8. **Release** 🔄 **v0.1.0 published, v0.1.1 (privilege separation) prepared.** Manual flow: `release.bat` → GitHub Release asset
    `djZen-win64.zip`; README and `docs/index.html` link the versioned asset
-   (`releases/download/v0.1.0/djZen-win64.zip`) – bump the version there for every release.
+   (`releases/download/vX.Y.Z/djZen-win64.zip`) – bump the version there for every release.
+   The zip contains a top-level `djZen/` folder, so even "extract here" in Downloads gives djZen
+   its own folder. Changes per version: `CHANGELOG.md`.
    Website on GitHub Pages from `docs/`.
    Later: GitHub Actions build on version tags + code signing (e.g. SignPath, RSA key).
 
@@ -267,4 +304,3 @@ end;
 - Installer (Inno Setup), portable exe – or both?
 - Minimum supported Windows build
 - Restore offer after reboot without starting djZen manually: scheduled task or Run key?
-- HKCU settings when a standard user elevates with another account's credentials

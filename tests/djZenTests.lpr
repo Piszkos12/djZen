@@ -5,6 +5,7 @@ program djZenTests;
 uses
   Classes, consoletestrunner,
   djzen.tests.core, djzen.tests.audit, djzen.tests.profiles, djzen.tests.apps, djzen.tests.session,
+  djzen.tests.elevation,
   djzen.tests.live;
 
 var

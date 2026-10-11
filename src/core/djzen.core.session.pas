@@ -37,12 +37,13 @@ var
 
 function LockFile: string;
 begin
-  Result := MachineDataDir + 'running.lock';
+  Result := UserStateDir + 'running.lock';
 end;
 
 function AcquireSingleInstance: Boolean;
 begin
-  Mutex := CreateMutexW(nil, True, 'Global\djZen.SingleInstance');
+  // Local (per logon session): another user cannot pre-create it to block djZen.
+  Mutex := CreateMutexW(nil, True, 'Local\djZen.SingleInstance');
   Result := (Mutex <> 0) and (GetLastError <> ERROR_ALREADY_EXISTS);
 end;
 

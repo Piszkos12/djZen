@@ -6,7 +6,7 @@ interface
 
 const
   AppName    = 'djZen';
-  AppVersion = '0.1.0';
+  AppVersion = '0.1.1';
   AppRepoUrl = 'https://github.com/Piszkos12/djZen';
 
 implementation

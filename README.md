@@ -7,11 +7,13 @@ One-click "DJ Zen mode" for Windows laptops. Silences notifications, disables Wi
 
 ## Download
 
-**[Download djZen 0.1.0](https://github.com/Piszkos12/djZen/releases/download/v0.1.0/djZen-win64.zip)**
+**[Download djZen 0.1.1](https://github.com/Piszkos12/djZen/releases/download/v0.1.1/djZen-win64.zip)**
 · [all releases](https://github.com/Piszkos12/djZen/releases)
 · [website](https://piszkos12.github.io/djZen/)
 
-Unzip anywhere and run `djZen.exe` (Windows 10/11, 64-bit; asks for administrator rights).
+The zip contains a `djZen` folder: extract it, ideally to a place like `C:\Tools\`, and run
+`djZen\djZen.exe` (Windows 10/11, 64-bit). What changed: [CHANGELOG.md](CHANGELOG.md). djZen runs as a normal user; Windows asks
+for administrator permission (UAC) only when a selected option needs it.
 djZen is not code-signed yet: Windows SmartScreen may warn ("More info → Run anyway"), and
 Smart App Control blocks unsigned apps.
 
@@ -19,6 +21,7 @@ Smart App Control blocks unsigned apps.
 
 - **Security software is never touched** – Defender, firewall, SmartScreen and antivirus are off-limits, even optionally. A built-in blocklist enforces this in code.
 - **Everything is reversible** – the original state is saved before any change and survives crashes and reboots.
+- **Least privilege** – djZen runs as the normal user. Only the options marked **(admin)** use a small elevated helper, started through UAC.
 - **djZen itself stays out of the way** – no animations, no sounds, no background polling.
 - **Native code only** – every tweak is Pascal code; no PowerShell or other scripts run with admin rights.
 - **No hard-coded DJ software** – DJ apps are described by data-only JSON files anyone can add.
@@ -26,7 +29,9 @@ Smart App Control blocks unsigned apps.
 ## What it changes
 
 Options are grouped by how much they help a live set. Each row shows its current state
-(OK / Needs change / N/A) and explains itself in the tooltip.
+(OK / Needs change / N/A) and explains itself in the tooltip. Options marked **(admin)** need
+administrator rights: Windows asks once when Zen mode starts and once when it is restored.
+Everything else works without admin rights.
 
 | Impact | Option | What it does |
 |---|---|---|
@@ -35,16 +40,16 @@ Options are grouped by how much they help a live set. Each row shows its current
 | High | Disable USB selective suspend | Idle USB ports stay powered (controllers, audio interfaces) |
 | High | Never sleep | No sleep during a set |
 | High | Turn off Wi-Fi | Wi-Fi radio off (a top cause of DPC latency) |
-| High | Pause Windows Update | Service stopped and disabled until restore |
+| High | Pause Windows Update (admin) | Service stopped and disabled until restore |
 | Medium | Disable communication ducking | Windows no longer lowers the volume on "calls" |
 | Medium | Disable PCI Express power saving | Link State Power Management off (advanced) |
 | Medium | Keep CPU at full speed | Minimum processor state 100% |
 | Medium | Never turn off the display | Screen stays on |
 | Medium | Turn off Bluetooth | Bluetooth radio off (via Windows radio management) |
-| Medium | Pause search indexing | Windows Search service stopped |
+| Medium | Pause search indexing (admin) | Windows Search service stopped |
 | Medium | Raise DJ software priority | Selected DJ software gets "high" priority (never "realtime") |
 | Low | Never hibernate | No automatic hibernation |
-| Low | Pause SysMain (Superfetch) | Background preloading stopped |
+| Low | Pause SysMain (Superfetch) (admin) | Background preloading stopped |
 
 Power settings are applied to the active power plan for both plugged-in and battery mode.
 
@@ -92,8 +97,27 @@ djZen.exe /restore          restore and show the result
 djZen.exe /restore /quiet   restore silently (exit code 0 = OK, 1 = failures)
 ```
 
-Files: snapshot and log in `%ProgramData%\djZen\` (`snapshot.json`, `logs\djzen.log`),
-settings and user profiles in `%APPDATA%\djZen\`.
+`/restore` restores your own settings directly and asks for administrator permission only if
+admin options are still active.
+
+Files:
+
+| Folder | Contents | Written by |
+|---|---|---|
+| `%LOCALAPPDATA%\djZen\` | `snapshot.json`, `logs\djzen.log`, `running.lock` | djZen (normal user) |
+| `%ProgramData%\djZen\` | `snapshot.json`, `logs\djzen-admin.log` | elevated helper only (folder ACL: admins write, users read) |
+| `%APPDATA%\djZen\` | `settings.json`, `profiles\`, `apps\` | djZen (normal user) |
+
+## Security
+
+- The GUI, profiles and DJ software descriptors never run with admin rights. The elevated helper
+  (`djZen.exe /elevated ...`) reads no profiles or descriptors: only tweak ids from its command
+  line, checked against the admin options built into djZen, and its own snapshot.
+- The helper locks down `%ProgramData%\djZen` (SYSTEM/Administrators only), never follows
+  junctions or symlinks there, and ignores files not owned by Administrators or SYSTEM.
+- DLLs are loaded from System32 only. djZen ships no DLLs, so it refuses to elevate while any
+  `.dll` file sits next to `djZen.exe` – keep it in its own folder.
+- Found a security problem? Please open a [GitHub issue](https://github.com/Piszkos12/djZen/issues).
 
 ## Building
 

@@ -13,19 +13,37 @@ uses
   djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services,
   djzen.tweaks.process,
   Windows, djzen.core.log, djzen.core.paths, djzen.core.restore, djzen.core.session,
-  djzen.ui.main;
+  djzen.core.elevation, djzen.win.security, djzen.ui.main;
 
 {$R *.res}
 
 begin
+  // Only System32 for every DLL loaded from now on (no DLL planting from the
+  // exe's folder, e.g. Downloads).
+  HardenDllSearch;
+
   {$IFDEF DEBUG}
-  // Leak report goes to a file instead of a message box on exit.
+  // Leak report goes to a file instead of a message box on exit. The hidden
+  // elevated helper must not write next to the exe (user-writable folder).
   if UseHeapTrace then
   begin
-    SysUtils.DeleteFile(ChangeFileExt(ParamStr(0), '.heap.log'));
-    SetHeapTraceOutput(ChangeFileExt(ParamStr(0), '.heap.log'));
+    if IsHelperRequested then
+      SetHeapTraceOutput('nul')
+    else
+    begin
+      SysUtils.DeleteFile(ChangeFileExt(ParamStr(0), '.heap.log'));
+      SetHeapTraceOutput(ChangeFileExt(ParamStr(0), '.heap.log'));
+    end;
   end;
   {$ENDIF}
+
+  // Elevated helper: no GUI, admin-only tweaks, see djzen.core.elevation.
+  if IsHelperRequested then
+  begin
+    ExitCode := RunHelper;
+    Exit;
+  end;
+
   if IsRestoreRequested then
   begin
     ExitCode := RunCommandLineRestore;
@@ -37,7 +55,7 @@ begin
     MessageBoxW(0, 'djZen is already running.', 'djZen', MB_OK or MB_ICONINFORMATION);
     Exit;
   end;
-  LogInit(LogFile);
+  LogInit(UserLogFile);
   BeginSession;
 
   RequireDerivedFormResource := True;

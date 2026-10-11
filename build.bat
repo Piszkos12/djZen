@@ -41,5 +41,6 @@ for %%D in (apps profiles) do (
 )
 copy /y LICENSE "%OUT%\" >nul
 copy /y README.md "%OUT%\" >nul
+copy /y CHANGELOG.md "%OUT%\" >nul
 echo %1 -^> %OUT%\djZen.exe
 exit /b 0

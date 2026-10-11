@@ -42,6 +42,9 @@ type
     { False while only the audit (Check/Capture) is implemented; the engine
       skips such tweaks and the UI shows them read-only. }
     function CanApply: Boolean; virtual;
+    { True if Apply/Revert need administrator rights. Such tweaks only run in
+      the elevated helper (djZen.exe /elevated), never in the GUI process. }
+    function RequiresAdmin: Boolean; virtual;
 
     function Check: TTweakCheck; virtual; abstract;
     { Caller owns the result. }
@@ -110,6 +113,11 @@ begin
 end;
 
 { TTweak }
+
+function TTweak.RequiresAdmin: Boolean;
+begin
+  Result := False;
+end;
 
 function TTweak.CanApply: Boolean;
 begin

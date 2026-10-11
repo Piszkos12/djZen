@@ -10,7 +10,6 @@
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True/PM_V2"/>
-        <ExecutionLevel Value="requireAdministrator"/>
         <LongPathAware Value="True"/>
         <AnsiUTF8 Value="True"/>
         <TextName Value="djZen.djZen"/>
@@ -20,6 +19,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="1"/>
+      <RevisionNr Value="1"/>
       <StringTable FileDescription="djZen - DJ Zen mode for Windows" ProductName="djZen" LegalCopyright="GPL-3.0"/>
     </VersionInfo>
     <BuildModes>
