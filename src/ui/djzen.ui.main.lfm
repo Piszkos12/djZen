@@ -1,0 +1,30 @@
+object MainForm: TMainForm
+  Left = 400
+  Height = 320
+  Top = 200
+  Width = 420
+  Caption = 'djZen'
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  object ZenButton: TButton
+    Left = 60
+    Height = 120
+    Top = 60
+    Width = 300
+    Anchors = []
+    Caption = 'ZEN'
+    Font.Height = -40
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 0
+  end
+  object StatusLabel: TLabel
+    Left = 60
+    Height = 20
+    Top = 210
+    Width = 300
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'Ready'
+  end
+end

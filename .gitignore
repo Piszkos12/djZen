@@ -1,0 +1,15 @@
+# Lazarus / Free Pascal build output
+lib/
+bin/
+backup/
+*.compiled
+*.ppu
+*.o
+*.or
+*.a
+*.res
+*.exe
+*.dbg
+
+# Lazarus per-user session
+*.lps
