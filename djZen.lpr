@@ -8,7 +8,9 @@ program djZen;
 
 uses
   Interfaces, Forms,
-  djzen.core.version, djzen.ui.main;
+  // tweak units register themselves; their order here is the apply order
+  djzen.tweaks.notify, djzen.tweaks.power, djzen.tweaks.radio, djzen.tweaks.services,
+  djzen.ui.main;
 
 {$R *.res}
 

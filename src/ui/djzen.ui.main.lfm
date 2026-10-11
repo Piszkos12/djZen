@@ -1,24 +1,24 @@
 object MainForm: TMainForm
   Left = 400
-  Height = 640
-  Top = 120
-  Width = 480
+  Height = 680
+  Top = 100
+  Width = 520
   Caption = 'djZen'
   Constraints.MinHeight = 400
-  Constraints.MinWidth = 360
+  Constraints.MinWidth = 400
   Position = poScreenCenter
   ShowHint = True
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   object TopPanel: TPanel
     Left = 0
-    Height = 150
+    Height = 160
     Top = 0
-    Width = 480
+    Width = 520
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 150
-    ClientWidth = 480
+    ClientHeight = 160
+    ClientWidth = 520
     TabOrder = 0
     object ZenButton: TButton
       AnchorSideLeft.Control = TopPanel
@@ -28,7 +28,7 @@ object MainForm: TMainForm
       Left = 16
       Height = 90
       Top = 16
-      Width = 448
+      Width = 488
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 16
       BorderSpacing.Top = 16
@@ -40,30 +40,57 @@ object MainForm: TMainForm
       ParentFont = False
       TabOrder = 0
     end
-    object StatusLabel: TLabel
-      AnchorSideLeft.Control = TopPanel
+    object RecheckButton: TButton
       AnchorSideTop.Control = ZenButton
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = TopPanel
       AnchorSideRight.Side = asrBottom
+      Left = 404
+      Height = 30
+      Top = 116
+      Width = 100
+      Anchors = [akTop, akRight]
+      BorderSpacing.Top = 10
+      BorderSpacing.Right = 16
+      Caption = 'Check again'
+      OnClick = RecheckButtonClick
+      TabOrder = 1
+    end
+    object StatusLabel: TLabel
+      AnchorSideLeft.Control = TopPanel
+      AnchorSideTop.Control = RecheckButton
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = RecheckButton
       Left = 16
       Height = 20
-      Top = 116
-      Width = 448
-      Alignment = taCenter
+      Top = 121
+      Width = 378
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
       BorderSpacing.Left = 16
-      BorderSpacing.Top = 10
-      BorderSpacing.Right = 16
+      BorderSpacing.Right = 10
       Caption = 'Ready'
     end
   end
+  object DisclaimerLabel: TLabel
+    Left = 16
+    Height = 34
+    Top = 638
+    Width = 488
+    Align = alBottom
+    BorderSpacing.Left = 16
+    BorderSpacing.Right = 16
+    BorderSpacing.Bottom = 8
+    Caption = 'Use at your own risk. djZen is provided "as is", without warranty or liability. See README and LICENSE.'
+    Font.Color = clGrayText
+    ParentFont = False
+    WordWrap = True
+  end
   object OptionsBox: TScrollBox
     Left = 0
-    Height = 490
-    Top = 150
-    Width = 480
+    Height = 478
+    Top = 160
+    Width = 520
     HorzScrollBar.Visible = False
     VertScrollBar.Increment = 20
     VertScrollBar.Tracking = True

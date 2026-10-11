@@ -4,7 +4,7 @@ program djZenTests;
 
 uses
   Classes, consoletestrunner,
-  djzen.tests.core;
+  djzen.tests.core, djzen.tests.audit;
 
 var
   App: TTestRunner;

@@ -21,6 +21,13 @@ lazbuild djZen.lpi
 
 The executable is written to `bin\djZen.exe` and requires administrator rights.
 
+## Disclaimer
+
+djZen changes system settings (power plans, services, devices, radios). **Use it at your own risk.**
+It is provided "as is", without warranty of any kind, and the authors accept no liability for any
+damage, data loss, failed performance or other consequence of using it. You alone decide whether to
+use it — test it at home before relying on it at a gig. See sections 15 and 16 of the [license](LICENSE).
+
 ## License
 
 [GPL-3.0](LICENSE)

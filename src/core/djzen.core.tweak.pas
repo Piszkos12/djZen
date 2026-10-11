@@ -39,12 +39,26 @@ type
     function Impact: TTweakImpact; virtual; abstract;
     function Risk: TTweakRisk; virtual; abstract;
 
+    { False while only the audit (Check/Capture) is implemented; the engine
+      skips such tweaks and the UI shows them read-only. }
+    function CanApply: Boolean; virtual;
+
     function Check: TTweakCheck; virtual; abstract;
     { Caller owns the result. }
     function Capture: TJSONObject; virtual; abstract;
     { Params is never nil (empty object when the profile gives none). }
     procedure Apply(Params: TJSONObject); virtual; abstract;
     procedure Revert(Saved: TJSONObject); virtual; abstract;
+  end;
+
+  ETweakNotImplemented = class(Exception);
+
+  { Base for tweaks that can only be audited so far. }
+  TAuditOnlyTweak = class(TTweak)
+  public
+    function CanApply: Boolean; override;
+    procedure Apply(Params: TJSONObject); override;
+    procedure Revert(Saved: TJSONObject); override;
   end;
 
   ETweakRegistry = class(Exception);
@@ -74,6 +88,8 @@ const
     ('Audio', 'Latency', 'Power', 'Services', 'Processes', 'Network', 'Misc');
   TweakImpactText: array[TTweakImpact] of string = ('High impact', 'Medium impact', 'Low impact');
   TweakRiskText: array[TTweakRisk] of string = ('Safe', 'Advanced', 'Expert');
+  TweakStatusText: array[TTweakStatus] of string =
+    ('Unknown', 'N/A', 'OK', 'Needs change', 'Error');
 
 implementation
 
@@ -91,6 +107,30 @@ begin
   if GlobalTweaks = nil then
     GlobalTweaks := TTweakRegistry.Create;
   Result := GlobalTweaks;
+end;
+
+{ TTweak }
+
+function TTweak.CanApply: Boolean;
+begin
+  Result := True;
+end;
+
+{ TAuditOnlyTweak }
+
+function TAuditOnlyTweak.CanApply: Boolean;
+begin
+  Result := False;
+end;
+
+procedure TAuditOnlyTweak.Apply(Params: TJSONObject);
+begin
+  raise ETweakNotImplemented.CreateFmt('%s: apply is not implemented yet', [Id]);
+end;
+
+procedure TAuditOnlyTweak.Revert(Saved: TJSONObject);
+begin
+  raise ETweakNotImplemented.CreateFmt('%s: revert is not implemented yet', [Id]);
 end;
 
 { TTweakRegistry }

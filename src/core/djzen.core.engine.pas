@@ -104,6 +104,8 @@ begin
     for I := 0 to FRegistry.Count - 1 do
     begin
       Tweak := FRegistry[I];
+      if not Tweak.CanApply then
+        Continue;
       Setting := Settings.Find(Tweak.Id);
       if Setting is TJSONObject then
         Params := TJSONObject(Setting)
