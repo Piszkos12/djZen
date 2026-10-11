@@ -103,15 +103,15 @@ not in `D:\lazarus`, set `LAZARUS_DIR`.
 ```
 build.bat     bin\dev\djZen.exe (debug) and bin\prod\djZen.exe (release), with apps\ and profiles\
 clean.bat     removes bin\, lib\ and backup\
-test.bat      builds and runs the unit tests
+tests.bat     builds and runs the unit tests
 release.bat   build + tests + dist\djZen-win64.zip for a GitHub Release
 ```
 
 ## Testing
 
 ```
-test.bat                                   unit tests (change nothing on the system)
-set "DJZEN_LIVE_TESTS=1" && test.bat       + live round-trip test: really applies and reverts
+tests.bat                                  unit tests (change nothing on the system)
+set "DJZEN_LIVE_TESTS=1" && tests.bat      + live round-trip test: really applies and reverts
                                              every tweak (elevated prompt required)
 ```
 

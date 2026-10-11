@@ -58,5 +58,8 @@
         <UseHeaptrc Value="True"/>
       </Debugging>
     </Linking>
+    <Other>
+      <CustomOptions Value="-vm5024"/>
+    </Other>
   </CompilerOptions>
 </CONFIG>

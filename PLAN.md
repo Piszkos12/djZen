@@ -217,7 +217,7 @@ djZen/
 ├─ tests/           fpcunit tests
 ├─ build.bat        builds dev + prod into bin\dev and bin\prod
 ├─ clean.bat        removes build output
-├─ test.bat         builds and runs the unit tests
+├─ tests.bat        builds and runs the unit tests
 ├─ release.bat      build + tests + dist\djZen-win64.zip for a GitHub Release
 ├─ tools/           build helpers (make-zip.ps1)
 └─ PLAN.md

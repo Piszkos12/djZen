@@ -12,9 +12,9 @@ call "%~dp0build.bat" || exit /b 1
 
 echo.
 echo === Running unit tests ===
-call "%~dp0test.bat" >nul
+call "%~dp0tests.bat" >nul
 if errorlevel 1 (
-  echo [ERROR] Unit tests failed - no release. Run test.bat for details.
+  echo [ERROR] Unit tests failed - no release. Run tests.bat for details.
   exit /b 1
 )
 echo Tests passed.

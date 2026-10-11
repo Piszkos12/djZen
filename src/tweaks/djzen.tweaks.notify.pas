@@ -14,7 +14,7 @@ interface
 implementation
 
 uses
-  Classes, SysUtils, Windows, Registry, fpjson, djzen.core.tweak;
+  Classes, SysUtils, Registry, fpjson, djzen.core.tweak;
 
 type
   TRegValueKind = (rvDword, rvString);

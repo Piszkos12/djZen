@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils, fpcunit, testregistry, fpjson,
-  djzen.core.tweak, djzen.core.snapshot, djzen.core.engine, djzen.core.blocklist;
+  djzen.core.tweak, djzen.core.engine, djzen.core.blocklist;
 
 type
   { Simulates a system setting held in a global variable. }

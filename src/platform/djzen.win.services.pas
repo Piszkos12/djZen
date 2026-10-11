@@ -55,6 +55,7 @@ begin
     end;
     try
       Result.Installed := True;
+      Status := Default(SERVICE_STATUS);
       if not QueryServiceStatus(Svc, Status) then
         raise EService.CreateFmt('QueryServiceStatus(%s) failed: %s', [ServiceName, SysErrorMessage(GetLastError)]);
       Result.State := Status.dwCurrentState;
@@ -109,6 +110,7 @@ var
 begin
   Start := GetTickCount64;
   repeat
+    Status := Default(SERVICE_STATUS);
     if not QueryServiceStatus(Svc, Status) then
       raise EService.CreateFmt('QueryServiceStatus(%s) failed: %s', [ServiceName, SysErrorMessage(GetLastError)]);
     if Status.dwCurrentState = Wanted then
@@ -129,6 +131,7 @@ procedure DoStop(Svc: SC_HANDLE; const ServiceName: string; TimeoutMs: DWORD);
 var
   Status: SERVICE_STATUS;
 begin
+  Status := Default(SERVICE_STATUS);
   if not QueryServiceStatus(Svc, Status) then
     raise EService.CreateFmt('QueryServiceStatus(%s) failed: %s', [ServiceName, SysErrorMessage(GetLastError)]);
   if Status.dwCurrentState = SERVICE_STOPPED then

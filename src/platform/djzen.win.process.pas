@@ -81,6 +81,10 @@ begin
   if H = 0 then
     Exit;
   try
+    Created := Default(TFileTime);
+    Exited := Created;
+    Kernel := Created;
+    User := Created;
     if GetProcessTimes(H, Created, Exited, Kernel, User) then
       Result := Int64(Created);
   finally

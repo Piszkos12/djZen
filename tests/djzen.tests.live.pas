@@ -6,7 +6,7 @@ unit djzen.tests.live;
   It changes system settings, so it only runs when explicitly requested:
     - environment variable DJZEN_LIVE_TESTS=1
     - from an elevated (administrator) command prompt
-  Example:  set "DJZEN_LIVE_TESTS=1" && test.bat }
+  Example:  set "DJZEN_LIVE_TESTS=1" && tests.bat }
 
 {$mode objfpc}{$H+}
 
@@ -97,7 +97,7 @@ begin
 end;
 
 initialization
-  // Trim: 'set X=1 && test.bat' in cmd stores "1 " with the trailing space.
+  // Trim: 'set X=1 && tests.bat' in cmd stores "1 " with the trailing space.
   if Trim(SysUtils.GetEnvironmentVariable('DJZEN_LIVE_TESTS')) = '1' then
   begin
     if IsUserAnAdmin then

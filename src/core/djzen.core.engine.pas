@@ -37,7 +37,7 @@ type
     function ActiveProfile: string;
     { ISO timestamp of the activation, '' if not active. }
     function ActiveSince: string;
-    { Settings: { "<tweak id>": { params } | true, ... }. Raises if already active. }
+    // Settings: {"<tweak id>": {params} | true, ...}. Raises if already active.
     function Activate(const ProfileName: string; Settings: TJSONObject): TZenResult;
     function Deactivate: TZenResult;
   end;

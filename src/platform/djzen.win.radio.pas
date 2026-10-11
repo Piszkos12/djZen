@@ -241,7 +241,6 @@ end;
 const
   IID_IRadioStatics: TGUID = '{5FB6A12E-67CB-46AE-AAE9-65919F86EFF4}';
 
-  RadioState_Unknown  = 0;
   RadioState_On       = 1;
   RadioState_Off      = 2;
   RadioState_Disabled = 3;

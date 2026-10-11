@@ -55,6 +55,8 @@ function PowerWriteDCValueIndex(RootPowerKey: HKEY; SchemeGuid, SubGroupOfPowerS
   PowerSettingGuid: PGUID; DcValueIndex: DWORD): DWORD; stdcall; external powrprof;
 function PowerSetActiveScheme(UserRootPowerKey: HKEY; SchemeGuid: PGUID): DWORD;
   stdcall; external powrprof;
+{ LocalFree taking a pointer: the memory comes back from powrprof as a pointer. }
+function LocalFreePtr(Mem: Pointer): Pointer; stdcall; external 'kernel32.dll' name 'LocalFree';
 
 procedure WritePowerSetting(const Scheme, SubGroup, Setting: TGUID; AC, DC: DWORD);
 var
@@ -93,7 +95,7 @@ begin
   if Err <> ERROR_SUCCESS then
     raise EPower.CreateFmt('PowerGetActiveScheme failed: %s', [SysErrorMessage(Err)]);
   Result := P^;
-  LocalFree(HLOCAL(P));
+  LocalFreePtr(P);
 end;
 
 function ReadPowerSetting(const Scheme, SubGroup, Setting: TGUID): TPowerValue;

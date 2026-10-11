@@ -61,7 +61,7 @@
             </Options>
           </Linking>
           <Other>
-            <CustomOptions Value="-dRELEASE"/>
+            <CustomOptions Value="-dRELEASE -vm5024"/>
           </Other>
         </CompilerOptions>
       </Item>
@@ -132,7 +132,7 @@
       </Options>
     </Linking>
     <Other>
-      <CustomOptions Value="-dDEBUG"/>
+      <CustomOptions Value="-dDEBUG -vm5024"/>
     </Other>
   </CompilerOptions>
   <Debugging>
