@@ -13,3 +13,6 @@ backup/
 
 # Lazarus per-user session
 *.lps
+
+# Release packages
+dist/

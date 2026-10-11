@@ -11,6 +11,15 @@ One-click "DJ Zen mode" for Windows laptops. Silences notifications, disables Wi
 - **djZen itself stays out of the way** – minimal CPU and memory use while Zen mode is active.
 - **No hard-coded DJ software** – DJ apps are described by separate, community-editable files.
 
+## Download
+
+**[Download the latest release](https://github.com/Piszkos12/djZen/releases/latest/download/djZen-win64.zip)**
+· [all releases](https://github.com/Piszkos12/djZen/releases)
+· [website](https://piszkos12.github.io/djZen/)
+
+Unzip anywhere and run `djZen.exe`. djZen is not code-signed yet: Windows SmartScreen may warn
+("More info → Run anyway"), and Smart App Control blocks unsigned apps.
+
 ## Building
 
 Requirements: [Lazarus](https://www.lazarus-ide.org/) 4.8 with FPC 3.2.2 (Win64).
@@ -19,7 +28,9 @@ Requirements: [Lazarus](https://www.lazarus-ide.org/) 4.8 with FPC 3.2.2 (Win64)
 lazbuild djZen.lpi
 ```
 
-The executable is written to `bin\djZen.exe` and requires administrator rights.
+`build.bat` writes `bin\dev\djZen.exe` (debug) and `bin\prod\djZen.exe` (release); both require
+administrator rights. `release.bat` builds, runs the tests and packs `bin\prod` into
+`dist\djZen-win64.zip` for a GitHub Release.
 
 ## Emergency restore
 
